@@ -42,6 +42,21 @@ class VideoEvaluationService:
     feature_groups = feature_configs_handler.features_configs_handler.get_features_by_category_by_group_config(
         features_category
     )
+
+    # If specific features were requested, filter to only those IDs.
+    if getattr(config, "features_to_evaluate", None):
+      requested_ids = set(config.features_to_evaluate)
+      filtered_feature_groups = {}
+      for group_key, feature_configs in feature_groups.items():
+        selected = [
+            f_config
+            for f_config in feature_configs
+            if f_config.id in requested_ids
+        ]
+        if selected:
+          filtered_feature_groups[group_key] = selected
+      feature_groups = filtered_feature_groups
+
     uri = video_uri  # use full video uri by default
 
     for group_key in feature_groups:
@@ -146,6 +161,7 @@ class VideoEvaluationService:
                   evidence=evaluated_feature.get("evidence"),
                   strengths=evaluated_feature.get("strengths"),
                   weaknesses=evaluated_feature.get("weaknesses"),
+                  value=evaluated_feature.get("value") or "",
               )
           )
         else:
@@ -156,7 +172,10 @@ class VideoEvaluationService:
           )
 
     # Sort features by category and id for presentation
-    if features_category == models.VideoFeatureCategory.LONG_FORM_ABCD:
+    if features_category in (
+        models.VideoFeatureCategory.LONG_FORM_ABCD,
+        models.VideoFeatureCategory.CONTENT_INTELLIGENCE,
+    ):
       feature_evaluations = sorted(
           feature_evaluations,
           key=lambda feature_eval: (

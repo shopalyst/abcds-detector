@@ -118,17 +118,25 @@ class PromptGenerator:
             Branded Product Categories: {config.branded_products_categories}
         """
 
+    # Some runs (e.g. content-quality-only) don't require brand metadata and
+    # may not provide it. Coerce missing values to empty strings for templating.
+    brand_name = config.brand_name or ""
+    brand_variations = config.brand_variations or []
+    branded_products = config.branded_products or []
+    branded_products_categories = config.branded_products_categories or []
+    branded_call_to_actions = config.branded_call_to_actions or []
+
     features_prompt = (
-        features_prompt.replace("{brand_name}", config.brand_name)
-        .replace("{brand_variations}", ", ".join(config.brand_variations))
-        .replace("{branded_products}", ", ".join(config.branded_products))
+        features_prompt.replace("{brand_name}", brand_name)
+        .replace("{brand_variations}", ", ".join(brand_variations))
+        .replace("{branded_products}", ", ".join(branded_products))
         .replace(
             "{branded_products_categories}",
-            ", ".join(config.branded_products_categories),
+            ", ".join(branded_products_categories),
         )
         .replace(
             "{branded_call_to_actions_str}",
-            ", ".join(config.branded_call_to_actions),
+            ", ".join(branded_call_to_actions),
         )
         .replace("{metadata_summary}", video_metadata)
     )
@@ -138,13 +146,14 @@ class PromptGenerator:
       self, feature: VideoFeature, config: Configuration
   ) -> str:
     """Augment LLM instructions in the prompt"""
+    branded_call_to_actions = config.branded_call_to_actions or []
     call_to_actions = ", ".join(get_call_to_action_api_list()) + ", ".join(
-        config.branded_call_to_actions
+        branded_call_to_actions
     )
     instructions = (
         "\n".join(feature.extra_instructions)
         .replace("{criteria}", feature.evaluation_criteria)  # TODO fix this
-        .replace("{call_to_actions}", ", ".join(call_to_actions))
+        .replace("{call_to_actions}", call_to_actions)
     )
     return instructions
 

@@ -29,6 +29,9 @@ from features_repository.long_form_abcd_features import (
     get_long_form_abcd_feature_configs,
 )
 from features_repository.shorts_features import get_shorts_feature_configs
+from features_repository.content_intelligence_features import (
+    get_content_intelligence_feature_configs,
+)
 import models
 
 
@@ -51,6 +54,10 @@ class FeaturesConfigsHandler:
       long_form_abcd_features = get_long_form_abcd_feature_configs()
 
       return long_form_abcd_features
+    elif category.value == VideoFeatureCategory.CONTENT_INTELLIGENCE.value:
+      content_quality_features = get_content_intelligence_feature_configs()
+
+      return content_quality_features
     else:
       logging.log("Category %s not supported. Please check", category)
 
@@ -72,7 +79,7 @@ class FeaturesConfigsHandler:
     return grouped_features
 
   def get_all_features(self):
-    """Gets all feature configs for Full ABCD and Shorts"""
+    """Gets all feature configs for Full ABCD, Shorts and Content Intelligence"""
     feature_configs = []
     feature_configs.extend(
         self.get_feature_configs_by_category(
@@ -81,6 +88,11 @@ class FeaturesConfigsHandler:
     )
     feature_configs.extend(
         self.get_feature_configs_by_category(VideoFeatureCategory.SHORTS)
+    )
+    feature_configs.extend(
+        self.get_feature_configs_by_category(
+            VideoFeatureCategory.CONTENT_INTELLIGENCE
+        )
     )
 
     return feature_configs

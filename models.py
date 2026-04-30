@@ -9,6 +9,9 @@ class VideoFeatureCategory(Enum):
 
   LONG_FORM_ABCD = "LONG_FORM_ABCD"
   SHORTS = "SHORTS"
+  CONTENT_INTELLIGENCE = "CONTENT_INTELLIGENCE"
+  # Backward-compatible alias for older references.
+  CONTENT_QUALITY = "CONTENT_INTELLIGENCE"
 
 
 class VideoFeatureSubCategory(Enum):
@@ -43,6 +46,7 @@ class CreativeProviderType(Enum):
 
   GCS = "GCS"
   YOUTUBE = "YOUTUBE"
+  INSTAGRAM = "INSTAGRAM"
 
 
 @dataclass
@@ -61,6 +65,9 @@ class VideoFeature:
   evaluation_function: str | None
   include_in_evaluation: bool
   group_by: str
+  # Optional second-level grouping label (used mainly for CONTENT_QUALITY).
+  # This does NOT affect evaluation batching (which uses group_by).
+  feature_group: str = "GENERAL"
 
 
 @dataclass
@@ -74,6 +81,9 @@ class FeatureEvaluation:
   evidence: str
   strengths: str
   weaknesses: str
+  # Optional structured value for classification-style features
+  # (e.g. language, genre, tone). For non-classification features, keep empty.
+  value: str = ""
 
 
 @dataclass
@@ -84,6 +94,7 @@ class VideoAssessment:
   video_uri: str
   long_form_abcd_evaluated_features: list[FeatureEvaluation]
   shorts_evaluated_features: list[FeatureEvaluation]
+  content_quality_evaluated_features: list[FeatureEvaluation]
   config: any  # TODO (ae) change this later
 
 
@@ -155,6 +166,9 @@ VIDEO_RESPONSE_SCHEMA = {
             },
             "confidence_score": {
                 "type": "number",
+            },
+            "value": {
+                "type": "string",
             },
             "rationale": {
                 "type": "string",

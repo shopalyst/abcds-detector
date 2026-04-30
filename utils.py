@@ -25,6 +25,56 @@ import textwrap
 from configuration import Configuration
 
 
+BRAND_COLLAB_ABCD_FEATURE_IDS = [
+    # Attract
+    "a_dynamic_start",
+    "a_quick_pacing",
+    "a_quick_pacing_1st_5_secs",
+    "a_supers",
+    "a_supers_with_audio",
+    # Brand
+    "b_brand_visuals",
+    "b_brand_visuals_1st_5_secs",
+    "b_brand_mention_speech",
+    "b_brand_mention_speech_1st_5_secs",
+    "b_product_visuals",
+    "b_product_visuals_1st_5_secs",
+    "b_product_mention_text",
+    "b_product_mention_text_1st_5_secs",
+    "b_product_mention_speech",
+    "b_product_mention_speech_1st_5_secs",
+    # Connect
+    "c_presence_of_people",
+    "c_presence_of_people_1st_5_secs",
+    "c_visible_face",
+    "c_visible_face_close_up",
+    # Direct
+    "d_call_to_action_speech",
+    "d_call_to_action_text",
+    "d_audio_speech_early_1st_5_secs",
+]
+
+CONTENT_QUALITY_FEATURE_IDS = [
+    "content_clarity_focus",
+    "narrative_structure",
+    "informational_depth",
+    "production_quality",
+    "actionable_value",
+    "audience_relevance",
+    "engagement_potential",
+    "low_effort_spam",
+    "authenticity_trustworthiness",
+    "misinformation_risk",
+    "clickbait_detection",
+    "negativity_hate_speech",
+    "brand_safety",
+    "audience_appropriateness",
+    "cultural_sensitivity",
+    "genuine_vs_ad",
+    "shorts_hashtag_strategy",
+]
+
+
 def build_abcd_params_config(args: any) -> Configuration:
   """Builds ABCD configuration with all the required parameters.
 
@@ -35,6 +85,34 @@ def build_abcd_params_config(args: any) -> Configuration:
 
   """
   config = Configuration()
+
+  # Custom preset: brand-collab analysis = selected ABCD + all content-intelligence,
+  # defaults to LLM-first; annotations remain optional and can be enabled via -uan.
+  if getattr(args, "brand_collab_preset", False):
+    extract_brand_metadata = True
+    # Keep annotations opt-in: default False, user can override with -uan.
+    use_annotations = args.use_annotations
+    use_llms = True  # implied by preset
+    run_long_form_abcd = True
+    run_shorts = False
+    run_content_quality = True
+    features_to_evaluate = BRAND_COLLAB_ABCD_FEATURE_IDS + CONTENT_QUALITY_FEATURE_IDS
+    # Default provider for this preset is Instagram (unless explicitly overridden).
+    creative_provider_type = args.creative_provider_type or "INSTAGRAM"
+  else:
+    extract_brand_metadata = args.extract_brand_metadata
+    use_annotations = args.use_annotations
+    use_llms = args.use_llms
+    run_long_form_abcd = args.run_long_form_abcd
+    run_shorts = args.run_shorts
+    run_content_quality = args.run_content_quality
+    creative_provider_type = args.creative_provider_type
+    features_to_evaluate = (
+        [f.strip() for f in args.features_to_evaluate.split(",") if f.strip()]
+        if args.features_to_evaluate
+        else []
+    )
+
   config.set_parameters(
       project_id=args.project_id,
       project_zone=args.project_zone,
@@ -43,13 +121,14 @@ def build_abcd_params_config(args: any) -> Configuration:
       bigquery_dataset=args.bigquery_dataset,
       bigquery_table=args.bigquery_table,
       assessment_file=args.assessment_file,
-      extract_brand_metadata=args.extract_brand_metadata,
-      use_annotations=args.use_annotations,
-      use_llms=args.use_llms,
-      run_long_form_abcd=args.run_long_form_abcd,
-      run_shorts=args.run_shorts,
-      features_to_evaluate=args.features_to_evaluate.split(","),
-      creative_provider_type=args.creative_provider_type,
+      extract_brand_metadata=extract_brand_metadata,
+      use_annotations=use_annotations,
+      use_llms=use_llms,
+      run_long_form_abcd=run_long_form_abcd,
+      run_shorts=run_shorts,
+      run_content_quality=run_content_quality,
+      features_to_evaluate=features_to_evaluate,
+      creative_provider_type=creative_provider_type,
       verbose=args.verbose,
   )
   config.set_videos(args.video_uris)
@@ -61,19 +140,32 @@ def build_abcd_params_config(args: any) -> Configuration:
       call_to_actions=args.branded_call_to_actions,
   )
 
-  config.set_llm_params(
-      llm_name=args.llm_name,
-      location=args.llm_location,
-      max_output_tokens=args.max_output_tokens,
-      temperature=args.temperature,
-      top_p=args.top_p,
-  )
+  # LLM params are optional; keep defaults when not provided.
+  if (
+      args.llm_name is not None
+      or args.llm_location is not None
+      or args.max_output_tokens is not None
+      or args.temperature is not None
+      or args.top_p is not None
+  ):
+    config.set_llm_params(
+        llm_name=args.llm_name or config.llm_params.model_name,
+        location=args.llm_location or config.llm_params.location,
+        max_output_tokens=args.max_output_tokens
+        or config.llm_params.generation_config.get("max_output_tokens"),
+        temperature=args.temperature
+        or config.llm_params.generation_config.get("temperature"),
+        top_p=args.top_p or config.llm_params.generation_config.get("top_p"),
+    )
 
   return config
 
 
 def invalid_brand_metadata(config: Configuration):
-  return not config.extract_brand_metadata and (
+  # Brand metadata is only required when running ABCD or Shorts features.
+  # Content-quality-only runs do not need brand information.
+  requires_brand = config.run_long_form_abcd or config.run_shorts
+  return requires_brand and not config.extract_brand_metadata and (
       not config.brand_name
       or len(config.brand_variations) == 0
       or len(config.branded_products) == 0
@@ -232,6 +324,23 @@ def parse_args(arg_list: list[str] | None = None) -> None:
       "-run_shorts",
       "-rs",
       help="Run evaluation for Shorts features",
+      action="store_true",
+      default=False,
+  )
+  parser.add_argument(
+      "-run_content_quality",
+      "-rcq",
+      help="Run content quality and safety evaluation (clarity, value, trust, safety)",
+      action="store_true",
+      default=False,
+  )
+  parser.add_argument(
+      "-brand_collab_preset",
+      "-bcp",
+      help=(
+          "Run brand-collab preset: selected ABCD features + all content-quality "
+          "features, LLM-only (no annotations), and auto-extract brand metadata."
+      ),
       action="store_true",
       default=False,
   )

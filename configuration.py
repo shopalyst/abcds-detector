@@ -55,6 +55,7 @@ class Configuration:
     self.use_llms = True
     self.run_long_form_abcd: bool = True
     self.run_shorts: bool = True
+    self.run_content_quality: bool = False
     self.features_to_evaluate: list[str]  # list of feature ids to run
     self.creative_provider_type = CreativeProviderType.GCS  # GCS by default
 
@@ -93,6 +94,7 @@ class Configuration:
       extract_brand_metadata: bool,
       run_long_form_abcd: bool,
       run_shorts: bool,
+      run_content_quality: bool,
       features_to_evaluate: list[str],
       creative_provider_type: CreativeProviderType,
       verbose: bool,
@@ -116,7 +118,9 @@ class Configuration:
     self.project_id = project_id
     self.project_zone = project_zone or "us-central1"
     self.bucket_name = bucket_name
-    self.knowledge_graph_api_key = knowledge_graph_api_key.strip()
+    self.knowledge_graph_api_key = (
+        knowledge_graph_api_key.strip() if knowledge_graph_api_key else ""
+    )
     self.bq_dataset_name = bigquery_dataset
     self.bq_table_name = bigquery_table
     self.assessment_file = assessment_file
@@ -125,6 +129,7 @@ class Configuration:
     self.use_llms = use_llms
     self.run_long_form_abcd = run_long_form_abcd
     self.run_shorts = run_shorts
+    self.run_content_quality = run_content_quality
     self.verbose = verbose
     self.features_to_evaluate = features_to_evaluate
 
@@ -133,6 +138,9 @@ class Configuration:
 
     if creative_provider_type == CreativeProviderType.YOUTUBE.value:
       self.creative_provider_type = CreativeProviderType.YOUTUBE
+
+    if creative_provider_type == CreativeProviderType.INSTAGRAM.value:
+      self.creative_provider_type = CreativeProviderType.INSTAGRAM
 
     self.annotation_path = f"gs://{bucket_name}/ABCD/"
 

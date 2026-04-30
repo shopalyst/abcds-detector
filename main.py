@@ -27,10 +27,51 @@ import models
 import utils
 from annotations_evaluation import annotations_generation
 from helpers import generic_helpers
+from helpers.upload_to_gcs import is_image_uri
+from helpers import instagram_pipeline
 from configuration import Configuration
 from creative_providers import creative_provider_proto
 from creative_providers import creative_provider_registry
 from evaluation_services import video_evaluation_service
+
+
+def execute_instagram_assessment_for_videos(config: Configuration):
+  """Download each Instagram URL, evaluate, and write one assessment per post."""
+  for instagram_url in config.video_uris:
+    print(f"\n\nProcessing Instagram assessment for: {instagram_url} …\n")
+    try:
+      video_assessment = instagram_pipeline.process_instagram_url(
+          config, instagram_url
+      )
+    except Exception as ex:
+      logging.error("Failed to process Instagram URL %s: %s", instagram_url, ex)
+      continue
+
+    if len(video_assessment.long_form_abcd_evaluated_features) > 0:
+      generic_helpers.print_abcd_assessment(
+          video_assessment.brand_name,
+          video_assessment.video_uri,
+          video_assessment.long_form_abcd_evaluated_features,
+      )
+    if len(video_assessment.shorts_evaluated_features) > 0:
+      generic_helpers.print_abcd_assessment(
+          video_assessment.brand_name,
+          video_assessment.video_uri,
+          video_assessment.shorts_evaluated_features,
+      )
+    if len(video_assessment.content_quality_evaluated_features) > 0:
+      generic_helpers.print_abcd_assessment(
+          video_assessment.brand_name,
+          video_assessment.video_uri,
+          video_assessment.content_quality_evaluated_features,
+      )
+
+    if config.assessment_file:
+      generic_helpers.write_assessment_to_file(config, video_assessment)
+    if config.bq_table_name:
+      generic_helpers.store_in_bq(config, video_assessment)
+
+    generic_helpers.remove_local_video_files()
 
 
 def execute_abcd_assessment_for_videos(config: Configuration):
@@ -69,23 +110,26 @@ def execute_abcd_assessment_for_videos(config: Configuration):
 
     print(f"\n\nProcessing ABCD Assessment for video {video_uri}... \n")
 
-    # Generate video annotations for custom features. Annotations are supported only for GCS providers
+    # Generate video annotations for custom features. Annotations are supported only for GCS providers and videos (not images).
     if (
         config.use_annotations
         and config.creative_provider_type == models.CreativeProviderType.GCS
+        and not is_image_uri(video_uri)
     ):
       annotations_generation.generate_video_annotations(config, video_uri)
 
-    # Full ABCD features require 1st_5_secs videos only for GCS providers
+    # Full ABCD features require 1st_5_secs videos only for GCS providers and videos (not images).
     if (
         config.run_long_form_abcd
         and config.creative_provider_type == models.CreativeProviderType.GCS
+        and not is_image_uri(video_uri)
     ):
       generic_helpers.trim_video(config, video_uri)
 
     # Execute ABCD Assessment
     long_form_abcd_evaluated_features: models.FeatureEvaluation = []
     shorts_evaluated_features: models.FeatureEvaluation = []
+    content_quality_evaluated_features: models.FeatureEvaluation = []
 
     if config.run_long_form_abcd:
       long_form_abcd_evaluated_features = (
@@ -105,15 +149,25 @@ def execute_abcd_assessment_for_videos(config: Configuration):
           )
       )
 
+    if config.run_content_quality:
+      content_quality_evaluated_features = (
+          video_evaluation_service.video_evaluation_service.evaluate_features(
+              config=config,
+              video_uri=video_uri,
+              features_category=models.VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          )
+      )
+
     video_assessment: models.VideoAssessment = models.VideoAssessment(
         brand_name=config.brand_name,
         video_uri=video_uri,
         long_form_abcd_evaluated_features=long_form_abcd_evaluated_features,
         shorts_evaluated_features=shorts_evaluated_features,
+        content_quality_evaluated_features=content_quality_evaluated_features,
         config=config,
     )
 
-    # Print assessments for Full ABCD and Shorts and store results
+    # Print assessments for Full ABCD, Shorts, and Content Quality
     if len(long_form_abcd_evaluated_features) > 0:
       generic_helpers.print_abcd_assessment(
           video_assessment.brand_name,
@@ -134,7 +188,19 @@ def execute_abcd_assessment_for_videos(config: Configuration):
       logging.info(
           "There are not Shorts evaluated features results to display."
       )
+    if len(content_quality_evaluated_features) > 0:
+      generic_helpers.print_abcd_assessment(
+          video_assessment.brand_name,
+          video_assessment.video_uri,
+          content_quality_evaluated_features,
+      )
+    else:
+      logging.info(
+          "There are not Content Quality evaluated features results to display."
+      )
 
+    if config.assessment_file:
+      generic_helpers.write_assessment_to_file(config, video_assessment)
     if config.bq_table_name:
       generic_helpers.store_in_bq(config, video_assessment)
 
@@ -167,7 +233,10 @@ def main(arg_list: list[str] | None = None) -> None:
     logging.info("Starting ABCD assessment... \n")
 
     if config.video_uris:
-      execute_abcd_assessment_for_videos(config)
+      if config.creative_provider_type == models.CreativeProviderType.INSTAGRAM:
+        execute_instagram_assessment_for_videos(config)
+      else:
+        execute_abcd_assessment_for_videos(config)
       logging.info("Finished ABCD assessment. \n")
     else:
       logging.info("There are no videos to process. \n")

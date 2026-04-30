@@ -33,6 +33,7 @@ from gcp_api_services import bigquery_api_service
 from gcp_api_services import gcs_api_service
 from configuration import FFMPEG_BUFFER, FFMPEG_BUFFER_REDUCED, Configuration
 import models
+from helpers.assessment_aggregation import RISK_FEATURE_IDS
 
 
 def get_knowledge_graph_entities(
@@ -147,8 +148,17 @@ def print_score_details(
 ) -> None:
   """Print score details"""
   total_features = len(evaluated_features)
+  # For risk features, detected=True means the creative has a problem.
+  # For positive features, detected=True means the creative meets the criterion.
   total_features_detected = len(
-      [feature for feature in evaluated_features if feature.detected]
+      [
+          feature
+          for feature in evaluated_features
+          if (
+              (feature.feature.id in RISK_FEATURE_IDS and not feature.detected)
+              or (feature.feature.id not in RISK_FEATURE_IDS and feature.detected)
+          )
+      ]
   )
   score = calculate_score(evaluated_features)
   print(
@@ -164,7 +174,9 @@ def print_score_details(
 
   print("Evaluated Features: \n")
   for eval_feature in evaluated_features:
-    if eval_feature.detected:
+    is_risk = eval_feature.feature.id in RISK_FEATURE_IDS
+    passed = (not eval_feature.detected) if is_risk else bool(eval_feature.detected)
+    if passed:
       print(f" * ✅ {eval_feature.feature.name}")
     else:
       print(f" * ❌ {eval_feature.feature.name}")
@@ -232,7 +244,9 @@ def calculate_score(
   total_features = len(evaluated_features)
   passed_features_count = 0
   for feature in evaluated_features:
-    if feature.detected:
+    is_risk = feature.feature.id in RISK_FEATURE_IDS
+    passed = (not feature.detected) if is_risk else bool(feature.detected)
+    if passed:
       passed_features_count += 1
   # Get score
   score = (
@@ -295,6 +309,7 @@ def get_table_columns_schema() -> list[str]:
           "column": "confidence_score",
           "data_type": bigquery.enums.SqlTypeNames.STRING,
       },
+      {"column": "value", "data_type": bigquery.enums.SqlTypeNames.STRING},
       {"column": "evidence", "data_type": bigquery.enums.SqlTypeNames.STRING},
       {"column": "rationale", "data_type": bigquery.enums.SqlTypeNames.STRING},
       {"column": "strengths", "data_type": bigquery.enums.SqlTypeNames.STRING},
@@ -385,6 +400,54 @@ def update_llms_evaluated_features(
         )
   else:
     print("No llms_evaluation found. Skipping from storing it in BQ. \n")
+
+
+def write_assessment_to_file(
+    config: Configuration,
+    video_assessment: models.VideoAssessment,
+) -> None:
+  """Write ABCD assessment results to a local JSON file for viewing in the project."""
+  if not config.assessment_file or not config.assessment_file.strip():
+    return
+  path = config.assessment_file.strip()
+  all_features = []
+  all_features.extend(video_assessment.long_form_abcd_evaluated_features)
+  all_features.extend(video_assessment.shorts_evaluated_features)
+  rows = []
+  for ef in all_features:
+    f = ef.feature
+    rows.append({
+        "feature_id": f.id,
+        "feature_name": f.name,
+        "category": getattr(f.category, "value", str(f.category)),
+        "sub_category": getattr(f.sub_category, "value", str(f.sub_category)),
+        "detected": ef.detected,
+        "confidence_score": ef.confidence_score,
+        "value": getattr(ef, "value", "") or "",
+        "rationale": ef.rationale or "",
+        "evidence": ef.evidence or "",
+        "strengths": ef.strengths or "",
+        "weaknesses": ef.weaknesses or "",
+    })
+  total = len(rows)
+  detected_count = sum(1 for r in rows if r["detected"])
+  score = round(
+      (detected_count / total * 100) if total else 0, 2
+  )
+  result_label = "Excellent" if score >= 80 else (
+      "Might Improve" if score >= 65 else "Needs Review"
+  )
+  payload = {
+      "brand_name": video_assessment.brand_name,
+      "video_uri": video_assessment.video_uri,
+      "score_percent": score,
+      "adherence": f"{detected_count}/{total}",
+      "result": result_label,
+      "features": rows,
+  }
+  with open(path, "w", encoding="utf-8") as out:
+    json.dump(payload, out, indent=2, ensure_ascii=False)
+  print(f"Results written to {path} \n")
 
 
 def store_in_bq(
@@ -481,6 +544,7 @@ def build_features_for_bq(
         "confidence_score": str(
             eval_feature.confidence_score
         ),  # TODO (ae) convert to str for now to avoid pandas issue
+        "value": getattr(eval_feature, "value", "") or "",
         "evidence": eval_feature.evidence,
         "rationale": eval_feature.rationale,
         "strengths": eval_feature.strengths,
