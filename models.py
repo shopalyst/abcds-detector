@@ -46,7 +46,6 @@ class CreativeProviderType(Enum):
 
   GCS = "GCS"
   YOUTUBE = "YOUTUBE"
-  INSTAGRAM = "INSTAGRAM"
 
 
 @dataclass

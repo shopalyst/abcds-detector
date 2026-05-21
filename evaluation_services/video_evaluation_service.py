@@ -43,19 +43,29 @@ class VideoEvaluationService:
         features_category
     )
 
-    # If specific features were requested, filter to only those IDs.
-    if getattr(config, "features_to_evaluate", None):
-      requested_ids = set(config.features_to_evaluate)
+    # If specific feature IDs were requested, filter to only those.
+    requested_ids = {
+        feature_id.strip()
+        for feature_id in (config.features_to_evaluate or [])
+        if feature_id and str(feature_id).strip()
+    }
+    if requested_ids:
       filtered_feature_groups = {}
-      for group_key, feature_configs in feature_groups.items():
+      for group_key, group_feature_configs in feature_groups.items():
         selected = [
             f_config
-            for f_config in feature_configs
+            for f_config in group_feature_configs
             if f_config.id in requested_ids
         ]
         if selected:
           filtered_feature_groups[group_key] = selected
       feature_groups = filtered_feature_groups
+      if not feature_groups:
+        logging.warning(
+            "No features matched features_to_evaluate for category %s."
+            " Check IDs or disable filtering.",
+            features_category.value,
+        )
 
     uri = video_uri  # use full video uri by default
 

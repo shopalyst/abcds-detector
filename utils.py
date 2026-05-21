@@ -94,11 +94,10 @@ def build_abcd_params_config(args: any) -> Configuration:
     use_annotations = args.use_annotations
     use_llms = True  # implied by preset
     run_long_form_abcd = True
-    run_shorts = False
+    run_shorts = True
     run_content_quality = True
     features_to_evaluate = BRAND_COLLAB_ABCD_FEATURE_IDS + CONTENT_QUALITY_FEATURE_IDS
-    # Default provider for this preset is Instagram (unless explicitly overridden).
-    creative_provider_type = args.creative_provider_type or "INSTAGRAM"
+    creative_provider_type = args.creative_provider_type or "GCS"
   else:
     extract_brand_metadata = args.extract_brand_metadata
     use_annotations = args.use_annotations

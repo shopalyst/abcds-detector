@@ -23,7 +23,6 @@
 
 from configuration import Configuration
 from gcp_api_services.gemini_api_service import get_gemini_api_service, LLMParameters
-from helpers.upload_to_gcs import is_image_uri
 from prompts.prompt_generator import prompt_generator
 from models import VIDEO_RESPONSE_SCHEMA, VIDEO_METADATA_RESPONSE_SCHEMA
 
@@ -54,10 +53,10 @@ class LLMDetector:
     llm_params.model_name = config.llm_params.model_name
     llm_params.location = config.llm_params.location
     llm_params.generation_config = config.llm_params.generation_config
-    # Set modality for API (image or video)
-    media_uri = evaluation_details.get("video_uri")
-    media_type = "image" if is_image_uri(media_uri or "") else "video"
-    llm_params.set_modality({"type": media_type, "video_uri": media_uri})
+    # Set modality for API
+    llm_params.set_modality(
+        {"type": "video", "video_uri": evaluation_details.get("video_uri")}
+    )
     # Set the required schema for the LLM response
     config.llm_params.generation_config["response_schema"] = (
         VIDEO_RESPONSE_SCHEMA
@@ -78,9 +77,8 @@ class LLMDetector:
   def get_video_metadata(self, config: Configuration, video_uri: str):
     print(f"Extracting brand metadata for video {video_uri}... \n")
     prompt_config = prompt_generator.get_metadata_prompt_config()
-    # Set modality for API (image or video)
-    media_type = "image" if is_image_uri(video_uri or "") else "video"
-    config.llm_params.set_modality({"type": media_type, "video_uri": video_uri})
+    # Set modality for API
+    config.llm_params.set_modality({"type": "video", "video_uri": video_uri})
     # Set the required schema for the LLM response
     config.llm_params.generation_config["response_schema"] = (
         VIDEO_METADATA_RESPONSE_SCHEMA

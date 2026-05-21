@@ -56,7 +56,7 @@ class Configuration:
     self.run_long_form_abcd: bool = True
     self.run_shorts: bool = True
     self.run_content_quality: bool = False
-    self.features_to_evaluate: list[str]  # list of feature ids to run
+    self.features_to_evaluate: list[str] = []
     self.creative_provider_type = CreativeProviderType.GCS  # GCS by default
 
     # set videos
@@ -138,9 +138,6 @@ class Configuration:
 
     if creative_provider_type == CreativeProviderType.YOUTUBE.value:
       self.creative_provider_type = CreativeProviderType.YOUTUBE
-
-    if creative_provider_type == CreativeProviderType.INSTAGRAM.value:
-      self.creative_provider_type = CreativeProviderType.INSTAGRAM
 
     self.annotation_path = f"gs://{bucket_name}/ABCD/"
 

@@ -68,14 +68,27 @@ class FeaturesConfigsHandler:
 
   def get_features_by_category_by_group_config(
       self, category: VideoFeatureCategory
-  ) -> list[VideoFeature]:
-    """Groups features by video_segment in feature_configs"""
+  ) -> dict[str, list[VideoFeature]]:
+    """Groups features for batched LLM calls.
+
+    Long-form ABCD / Shorts: group by video segment (group_by).
+    Content intelligence: group by feature_group so each Gemini request
+    stays smaller (avoids empty/truncated responses when all ~35 run at once).
+    """
     feature_configs = self.get_feature_configs_by_category(category)
+    if not feature_configs:
+      return {}
     grouped_features = {}
     for d in feature_configs:
-      grouped_features.setdefault(d.group_by.value, []).append(
-          d
-      )  # Check this video_segment!
+      if category.value == VideoFeatureCategory.CONTENT_INTELLIGENCE.value:
+        group_key = getattr(d, "feature_group", "GENERAL")
+      else:
+        group_key = (
+            d.group_by.value
+            if hasattr(d.group_by, "value")
+            else str(d.group_by)
+        )
+      grouped_features.setdefault(group_key, []).append(d)
     return grouped_features
 
   def get_all_features(self):
