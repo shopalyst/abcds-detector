@@ -4,7 +4,7 @@ Shopalyst-only behavior lives here so merges with upstream `abcds-detector` `mai
 
 ## Upstream hooks (keep small when merging)
 
-| Shared file | Hook |
+| Shared file | Hook ||
 |-------------|------|
 | `main.py` | Calls `shopalyst_extensions.pipeline` for content eval / export |
 | `utils.py` | Calls `shopalyst_extensions.cli` for `-rcq`, `-bcp`, brand rules |
