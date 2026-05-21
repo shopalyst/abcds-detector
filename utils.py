@@ -23,56 +23,7 @@
 import argparse
 import textwrap
 from configuration import Configuration
-
-
-BRAND_COLLAB_ABCD_FEATURE_IDS = [
-    # Attract
-    "a_dynamic_start",
-    "a_quick_pacing",
-    "a_quick_pacing_1st_5_secs",
-    "a_supers",
-    "a_supers_with_audio",
-    # Brand
-    "b_brand_visuals",
-    "b_brand_visuals_1st_5_secs",
-    "b_brand_mention_speech",
-    "b_brand_mention_speech_1st_5_secs",
-    "b_product_visuals",
-    "b_product_visuals_1st_5_secs",
-    "b_product_mention_text",
-    "b_product_mention_text_1st_5_secs",
-    "b_product_mention_speech",
-    "b_product_mention_speech_1st_5_secs",
-    # Connect
-    "c_presence_of_people",
-    "c_presence_of_people_1st_5_secs",
-    "c_visible_face",
-    "c_visible_face_close_up",
-    # Direct
-    "d_call_to_action_speech",
-    "d_call_to_action_text",
-    "d_audio_speech_early_1st_5_secs",
-]
-
-CONTENT_QUALITY_FEATURE_IDS = [
-    "content_clarity_focus",
-    "narrative_structure",
-    "informational_depth",
-    "production_quality",
-    "actionable_value",
-    "audience_relevance",
-    "engagement_potential",
-    "low_effort_spam",
-    "authenticity_trustworthiness",
-    "misinformation_risk",
-    "clickbait_detection",
-    "negativity_hate_speech",
-    "brand_safety",
-    "audience_appropriateness",
-    "cultural_sensitivity",
-    "genuine_vs_ad",
-    "shorts_hashtag_strategy",
-]
+from shopalyst_extensions import cli as shopalyst_cli
 
 
 def build_abcd_params_config(args: any) -> Configuration:
@@ -86,31 +37,7 @@ def build_abcd_params_config(args: any) -> Configuration:
   """
   config = Configuration()
 
-  # Custom preset: brand-collab analysis = selected ABCD + all content-intelligence,
-  # defaults to LLM-first; annotations remain optional and can be enabled via -uan.
-  if getattr(args, "brand_collab_preset", False):
-    extract_brand_metadata = True
-    # Keep annotations opt-in: default False, user can override with -uan.
-    use_annotations = args.use_annotations
-    use_llms = True  # implied by preset
-    run_long_form_abcd = True
-    run_shorts = True
-    run_content_quality = True
-    features_to_evaluate = BRAND_COLLAB_ABCD_FEATURE_IDS + CONTENT_QUALITY_FEATURE_IDS
-    creative_provider_type = args.creative_provider_type or "GCS"
-  else:
-    extract_brand_metadata = args.extract_brand_metadata
-    use_annotations = args.use_annotations
-    use_llms = args.use_llms
-    run_long_form_abcd = args.run_long_form_abcd
-    run_shorts = args.run_shorts
-    run_content_quality = args.run_content_quality
-    creative_provider_type = args.creative_provider_type
-    features_to_evaluate = (
-        [f.strip() for f in args.features_to_evaluate.split(",") if f.strip()]
-        if args.features_to_evaluate
-        else []
-    )
+  flags = shopalyst_cli.resolve_run_flags(args)
 
   config.set_parameters(
       project_id=args.project_id,
@@ -120,14 +47,14 @@ def build_abcd_params_config(args: any) -> Configuration:
       bigquery_dataset=args.bigquery_dataset,
       bigquery_table=args.bigquery_table,
       assessment_file=args.assessment_file,
-      extract_brand_metadata=extract_brand_metadata,
-      use_annotations=use_annotations,
-      use_llms=use_llms,
-      run_long_form_abcd=run_long_form_abcd,
-      run_shorts=run_shorts,
-      run_content_quality=run_content_quality,
-      features_to_evaluate=features_to_evaluate,
-      creative_provider_type=creative_provider_type,
+      extract_brand_metadata=flags["extract_brand_metadata"],
+      use_annotations=flags["use_annotations"],
+      use_llms=flags["use_llms"],
+      run_long_form_abcd=flags["run_long_form_abcd"],
+      run_shorts=flags["run_shorts"],
+      run_content_quality=flags["run_content_quality"],
+      features_to_evaluate=flags["features_to_evaluate"],
+      creative_provider_type=flags["creative_provider_type"],
       verbose=args.verbose,
   )
   config.set_videos(args.video_uris)
@@ -161,15 +88,7 @@ def build_abcd_params_config(args: any) -> Configuration:
 
 
 def invalid_brand_metadata(config: Configuration):
-  # Brand metadata is only required when running ABCD or Shorts features.
-  # Content-quality-only runs do not need brand information.
-  requires_brand = config.run_long_form_abcd or config.run_shorts
-  return requires_brand and not config.extract_brand_metadata and (
-      not config.brand_name
-      or len(config.brand_variations) == 0
-      or len(config.branded_products) == 0
-      or len(config.branded_products_categories) == 0
-  )
+  return shopalyst_cli.invalid_brand_metadata(config)
 
 
 def parse_args(arg_list: list[str] | None = None) -> None:
@@ -326,23 +245,7 @@ def parse_args(arg_list: list[str] | None = None) -> None:
       action="store_true",
       default=False,
   )
-  parser.add_argument(
-      "-run_content_quality",
-      "-rcq",
-      help="Run content quality and safety evaluation (clarity, value, trust, safety)",
-      action="store_true",
-      default=False,
-  )
-  parser.add_argument(
-      "-brand_collab_preset",
-      "-bcp",
-      help=(
-          "Run brand-collab preset: selected ABCD features + all content-quality "
-          "features, LLM-only (no annotations), and auto-extract brand metadata."
-      ),
-      action="store_true",
-      default=False,
-  )
+  shopalyst_cli.register_cli_arguments(parser)
   parser.add_argument(
       "-verbose",
       "-v",

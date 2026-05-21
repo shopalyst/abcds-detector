@@ -31,6 +31,8 @@ from configuration import Configuration
 from creative_providers import creative_provider_proto
 from creative_providers import creative_provider_registry
 from evaluation_services import video_evaluation_service
+from shopalyst_extensions import cli as shopalyst_cli
+from shopalyst_extensions import pipeline as shopalyst_pipeline
 
 
 def execute_abcd_assessment_for_videos(config: Configuration):
@@ -107,24 +109,9 @@ def execute_abcd_assessment_for_videos(config: Configuration):
           )
       )
 
-    if config.run_content_quality:
-      if not config.use_llms:
-        logging.warning(
-            "run_content_quality is enabled but use_llms is false; "
-            "content intelligence requires -ull."
-        )
-      logging.info("Running content intelligence evaluation...")
-      content_quality_evaluated_features = (
-          video_evaluation_service.video_evaluation_service.evaluate_features(
-              config=config,
-              video_uri=video_uri,
-              features_category=models.VideoFeatureCategory.CONTENT_INTELLIGENCE,
-          )
-      )
-      logging.info(
-          "Content intelligence: %s feature(s) evaluated.",
-          len(content_quality_evaluated_features),
-      )
+    content_quality_evaluated_features = shopalyst_pipeline.evaluate_content_quality(
+        config, video_uri
+    )
 
     video_assessment: models.VideoAssessment = models.VideoAssessment(
         brand_name=config.brand_name,
@@ -156,21 +143,13 @@ def execute_abcd_assessment_for_videos(config: Configuration):
       logging.info(
           "There are not Shorts evaluated features results to display."
       )
-    if len(content_quality_evaluated_features) > 0:
-      generic_helpers.print_abcd_assessment(
-          video_assessment.brand_name,
-          video_assessment.video_uri,
-          content_quality_evaluated_features,
-      )
-    else:
-      logging.info(
-          "There are not Content Quality evaluated features results to display."
-      )
+    shopalyst_pipeline.print_content_results(
+        video_assessment.brand_name,
+        video_assessment.video_uri,
+        content_quality_evaluated_features,
+    )
 
-    if config.assessment_file:
-      generic_helpers.write_assessment_to_file(config, video_assessment)
-    if config.bq_table_name:
-      generic_helpers.store_in_bq(config, video_assessment)
+    shopalyst_pipeline.persist_results(config, video_assessment)
 
     video_assessments.append(video_assessment)
 
@@ -193,7 +172,7 @@ def main(arg_list: list[str] | None = None) -> None:
 
     config = utils.build_abcd_params_config(args)
 
-    if utils.invalid_brand_metadata(config):
+    if shopalyst_cli.invalid_brand_metadata(config):
       logging.error(
           "The Extract Brand Metadata option is disabled and no brand details"
           " were defined. \n"

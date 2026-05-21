@@ -29,9 +29,6 @@ from features_repository.long_form_abcd_features import (
     get_long_form_abcd_feature_configs,
 )
 from features_repository.shorts_features import get_shorts_feature_configs
-from features_repository.content_intelligence_features import (
-    get_content_intelligence_feature_configs,
-)
 import models
 
 
@@ -55,9 +52,10 @@ class FeaturesConfigsHandler:
 
       return long_form_abcd_features
     elif category.value == VideoFeatureCategory.CONTENT_INTELLIGENCE.value:
-      content_quality_features = get_content_intelligence_feature_configs()
-
-      return content_quality_features
+      from shopalyst_extensions.feature_registry import (
+          get_content_intelligence_feature_configs,
+      )
+      return get_content_intelligence_feature_configs()
     else:
       logging.log("Category %s not supported. Please check", category)
 
@@ -69,26 +67,14 @@ class FeaturesConfigsHandler:
   def get_features_by_category_by_group_config(
       self, category: VideoFeatureCategory
   ) -> dict[str, list[VideoFeature]]:
-    """Groups features for batched LLM calls.
-
-    Long-form ABCD / Shorts: group by video segment (group_by).
-    Content intelligence: group by feature_group so each Gemini request
-    stays smaller (avoids empty/truncated responses when all ~35 run at once).
-    """
+    """Groups features by video_segment in feature_configs"""
     feature_configs = self.get_feature_configs_by_category(category)
-    if not feature_configs:
-      return {}
+    if category.value == VideoFeatureCategory.CONTENT_INTELLIGENCE.value:
+      from shopalyst_extensions import feature_grouping
+      return feature_grouping.group_by_feature_group(feature_configs)
     grouped_features = {}
     for d in feature_configs:
-      if category.value == VideoFeatureCategory.CONTENT_INTELLIGENCE.value:
-        group_key = getattr(d, "feature_group", "GENERAL")
-      else:
-        group_key = (
-            d.group_by.value
-            if hasattr(d.group_by, "value")
-            else str(d.group_by)
-        )
-      grouped_features.setdefault(group_key, []).append(d)
+      grouped_features.setdefault(d.group_by.value, []).append(d)
     return grouped_features
 
   def get_all_features(self):

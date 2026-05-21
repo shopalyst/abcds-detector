@@ -34,14 +34,6 @@ from gcp_api_services import gcs_api_service
 from configuration import FFMPEG_BUFFER, FFMPEG_BUFFER_REDUCED, Configuration
 import models
 
-# Features where detected=True means a problem (inverse pass/fail for scoring).
-RISK_FEATURE_IDS = frozenset({
-    "misinformation_risk",
-    "clickbait_detection",
-    "negativity_hate_speech",
-    "brand_safety",
-})
-
 
 def get_knowledge_graph_entities(
     config: Configuration, queries: list[str]
@@ -155,17 +147,8 @@ def print_score_details(
 ) -> None:
   """Print score details"""
   total_features = len(evaluated_features)
-  # For risk features, detected=True means the creative has a problem.
-  # For positive features, detected=True means the creative meets the criterion.
   total_features_detected = len(
-      [
-          feature
-          for feature in evaluated_features
-          if (
-              (feature.feature.id in RISK_FEATURE_IDS and not feature.detected)
-              or (feature.feature.id not in RISK_FEATURE_IDS and feature.detected)
-          )
-      ]
+      [feature for feature in evaluated_features if feature.detected]
   )
   score = calculate_score(evaluated_features)
   print(
@@ -181,9 +164,7 @@ def print_score_details(
 
   print("Evaluated Features: \n")
   for eval_feature in evaluated_features:
-    is_risk = eval_feature.feature.id in RISK_FEATURE_IDS
-    passed = (not eval_feature.detected) if is_risk else bool(eval_feature.detected)
-    if passed:
+    if eval_feature.detected:
       print(f" * ✅ {eval_feature.feature.name}")
     else:
       print(f" * ❌ {eval_feature.feature.name}")
@@ -251,9 +232,7 @@ def calculate_score(
   total_features = len(evaluated_features)
   passed_features_count = 0
   for feature in evaluated_features:
-    is_risk = feature.feature.id in RISK_FEATURE_IDS
-    passed = (not feature.detected) if is_risk else bool(feature.detected)
-    if passed:
+    if feature.detected:
       passed_features_count += 1
   # Get score
   score = (
@@ -408,101 +387,6 @@ def update_llms_evaluated_features(
     print("No llms_evaluation found. Skipping from storing it in BQ. \n")
 
 
-def _feature_evaluation_to_dict(
-    eval_feature: models.FeatureEvaluation,
-    pipeline: str,
-) -> dict:
-  """Serialize one feature evaluation with full LLM narrative fields."""
-  f = eval_feature.feature
-  is_risk = f.id in RISK_FEATURE_IDS
-  passed = (not eval_feature.detected) if is_risk else bool(eval_feature.detected)
-  return {
-      "pipeline": pipeline,
-      "feature_id": f.id,
-      "feature_name": f.name,
-      "feature_category": getattr(f.category, "value", str(f.category)),
-      "feature_sub_category": getattr(f.sub_category, "value", str(f.sub_category)),
-      "feature_video_segment": getattr(f.video_segment, "value", str(f.video_segment)),
-      "feature_group": getattr(f, "feature_group", "GENERAL"),
-      "evaluation_method": getattr(f.evaluation_method, "value", str(f.evaluation_method)),
-      "feature_evaluation_criteria": f.evaluation_criteria or "",
-      "detected": eval_feature.detected,
-      "passed": passed,
-      "is_risk_feature": is_risk,
-      "confidence_score": eval_feature.confidence_score,
-      "value": getattr(eval_feature, "value", "") or "",
-      "rationale": eval_feature.rationale or "",
-      "evidence": eval_feature.evidence or "",
-      "strengths": eval_feature.strengths or "",
-      "weaknesses": eval_feature.weaknesses or "",
-  }
-
-
-def _serialize_evaluations(
-    evaluations: list[models.FeatureEvaluation], pipeline: str
-) -> list[dict]:
-  return [_feature_evaluation_to_dict(ef, pipeline) for ef in evaluations]
-
-
-def write_assessment_to_file(
-    config: Configuration,
-    video_assessment: models.VideoAssessment,
-) -> None:
-  """Write full assessment results (including rationale, evidence, etc.) to a local JSON file."""
-  if not config.assessment_file or not config.assessment_file.strip():
-    return
-  path = config.assessment_file.strip()
-
-  long_form = _serialize_evaluations(
-      video_assessment.long_form_abcd_evaluated_features, "LONG_FORM_ABCD"
-  )
-  shorts = _serialize_evaluations(
-      video_assessment.shorts_evaluated_features, "SHORTS"
-  )
-  content_quality = _serialize_evaluations(
-      video_assessment.content_quality_evaluated_features, "CONTENT_INTELLIGENCE"
-  )
-  all_rows = long_form + shorts + content_quality
-
-  total = len(all_rows)
-  passed_count = sum(1 for r in all_rows if r["passed"])
-  score = round((passed_count / total * 100) if total else 0, 2)
-  result_label = "Excellent" if score >= 80 else (
-      "Might Improve" if score >= 65 else "Needs Review"
-  )
-
-  payload = {
-      "execution_timestamp": datetime.datetime.now().isoformat(),
-      "brand_name": video_assessment.brand_name,
-      "video_uri": video_assessment.video_uri,
-      "brand_metadata": {
-          "brand_name": config.brand_name,
-          "brand_variations": config.brand_variations,
-          "branded_products": config.branded_products,
-          "branded_products_categories": config.branded_products_categories,
-          "branded_call_to_actions": config.branded_call_to_actions,
-      },
-      "summary": {
-          "score_percent": score,
-          "adherence": f"{passed_count}/{total}",
-          "result": result_label,
-          "feature_count": total,
-      },
-      "evaluations": {
-          "long_form_abcd": long_form,
-          "shorts": shorts,
-          "content_intelligence": content_quality,
-      },
-      "features": all_rows,
-  }
-  parent = os.path.dirname(path)
-  if parent:
-    os.makedirs(parent, exist_ok=True)
-  with open(path, "w", encoding="utf-8") as out:
-    json.dump(payload, out, indent=2, ensure_ascii=False)
-  print(f"Results written to {path} \n")
-
-
 def store_in_bq(
     config: Configuration,
     video_assessment: models.VideoAssessment,
@@ -562,7 +446,6 @@ def build_features_for_bq(
   evaluated_features = []
   evaluated_features.extend(video_assessment.long_form_abcd_evaluated_features)
   evaluated_features.extend(video_assessment.shorts_evaluated_features)
-  evaluated_features.extend(video_assessment.content_quality_evaluated_features)
   # Insert all feature configs first
   for eval_feature in evaluated_features:
     if config.creative_provider_type == models.CreativeProviderType:

@@ -9,6 +9,7 @@ from llms_evaluation import llms_detector
 from custom_evaluation import custom_detector
 from helpers import generic_helpers
 from gcp_api_services import gcs_api_service
+from shopalyst_extensions import evaluation as shopalyst_evaluation
 
 
 class VideoEvaluationService:
@@ -43,29 +44,9 @@ class VideoEvaluationService:
         features_category
     )
 
-    # If specific feature IDs were requested, filter to only those.
-    requested_ids = {
-        feature_id.strip()
-        for feature_id in (config.features_to_evaluate or [])
-        if feature_id and str(feature_id).strip()
-    }
-    if requested_ids:
-      filtered_feature_groups = {}
-      for group_key, group_feature_configs in feature_groups.items():
-        selected = [
-            f_config
-            for f_config in group_feature_configs
-            if f_config.id in requested_ids
-        ]
-        if selected:
-          filtered_feature_groups[group_key] = selected
-      feature_groups = filtered_feature_groups
-      if not feature_groups:
-        logging.warning(
-            "No features matched features_to_evaluate for category %s."
-            " Check IDs or disable filtering.",
-            features_category.value,
-        )
+    feature_groups = shopalyst_evaluation.filter_by_requested_ids(
+        config, feature_groups, features_category
+    )
 
     uri = video_uri  # use full video uri by default
 
@@ -181,19 +162,9 @@ class VideoEvaluationService:
               evaluated_feature.get("id"),
           )
 
-    # Sort features by category and id for presentation
-    if features_category in (
-        models.VideoFeatureCategory.LONG_FORM_ABCD,
-        models.VideoFeatureCategory.CONTENT_INTELLIGENCE,
-    ):
-      feature_evaluations = sorted(
-          feature_evaluations,
-          key=lambda feature_eval: (
-              feature_eval.feature.category.value,
-              feature_eval.feature.id,
-          ),
-          reverse=False,
-      )
+    feature_evaluations = shopalyst_evaluation.sort_feature_evaluations(
+        feature_evaluations, features_category
+    )
 
     return feature_evaluations
 
