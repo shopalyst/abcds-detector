@@ -38,14 +38,13 @@ CONTENT_QUALITY_FEATURE_IDS = [
     "audience_relevance",
     "engagement_potential",
     "low_effort_spam",
-    "authenticity_trustworthiness",
+    "genuine_vs_ad",
     "misinformation_risk",
     "clickbait_detection",
     "negativity_hate_speech",
     "brand_safety",
     "audience_appropriateness",
     "cultural_sensitivity",
-    "genuine_vs_ad",
     "shorts_hashtag_strategy",
 ]
 

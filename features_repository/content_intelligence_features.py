@@ -35,6 +35,16 @@ from models import (
     VideoFeatureSubCategory,
 )
 
+# Top-level genre labels (primary / secondary / other). Rank by emphasis in content.
+GENRE_LEVEL_LABELS = (
+    "food, lifestyle, entertainment, beauty, fashion, fitness, travel, "
+    "education, tech, gaming, finance, parenting, home"
+)
+GENRE_LEVEL_INSTRUCTION = (
+    "Genre level labels must be chosen ONLY from this list (use lowercase): "
+    f"{GENRE_LEVEL_LABELS}."
+)
+
 
 def get_content_intelligence_feature_configs() -> list[VideoFeature]:
   """Gets all content intelligence and safety feature configurations."""
@@ -45,7 +55,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="content_clarity_focus",
           name="Content Clarity & Focus",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="QUALITY_CLARITY",
@@ -78,7 +88,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="narrative_structure",
           name="Narrative Structure",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="QUALITY_CLARITY",
@@ -112,7 +122,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="informational_depth",
           name="Informational Depth",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="QUALITY_CLARITY",
@@ -145,7 +155,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="production_quality",
           name="Acceptable Production Quality",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
@@ -187,7 +197,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="actionable_value",
           name="Actionable Value",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="VALUE",
@@ -220,7 +230,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="audience_relevance",
           name="Audience Relevance",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="VALUE",
@@ -257,7 +267,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="engagement_potential",
           name="Engagement Potential",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="VALUE",
@@ -292,7 +302,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="low_effort_spam",
           name="Not Low-Effort / Spam",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TRUST",
@@ -329,7 +339,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="authenticity_trustworthiness",
           name="Authenticity & Trustworthiness",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TRUST",
@@ -357,13 +367,13 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
           id="misinformation_risk",
           name="Misinformation Risk",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="SAFETY",
@@ -404,7 +414,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="clickbait_detection",
           name="Clickbait Detection",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="QUALITY_CLARITY",
@@ -443,7 +453,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="negativity_hate_speech",
           name="Negativity / Hate Speech",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="SAFETY",
@@ -485,7 +495,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="brand_safety",
           name="Brand Safety Risk",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="SAFETY",
@@ -523,7 +533,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="audience_appropriateness",
           name="Audience Appropriateness",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="SAFETY",
@@ -557,7 +567,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="cultural_sensitivity",
           name="Cultural Sensitivity",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="SAFETY",
@@ -593,33 +603,58 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       # Group 5 – Content Diagnostics (LLM-only, boolean + evidence)         #
       # ------------------------------------------------------------------ #
       VideoFeature(
-          id="genre_of_content",
-          name="Genre of Content",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          id="genre_levels",
+          name="Genre Levels",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
-          feature_group="STYLE_CLASSIFICATION",
-          evaluation_criteria="""
-              The content fits a clear, recognizable genre (e.g., tutorial/how-to,
-              review, entertainment/skit, vlog, news/commentary, testimonial, demo,
-              narrative/story, challenge, educational explainer).
+          feature_group="GENRE_LEVELS",
+          evaluation_criteria=f"""
+              Classify content genre levels ranked by emphasis (most talked about
+              or shown first). Level labels use the same allowed list for
+              primary, secondary, and other. {GENRE_LEVEL_INSTRUCTION}
+              Sub-genres are free text that refine a level (e.g. beauty → makeup
+              tutorial).
           """,
           prompt_template="""
-              Does this content fit a clear, recognizable genre?
+              Classify this content's genre levels (primary, sub-genre,
+              secondary, secondary sub-genres, and other levels by emphasis).
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              GENRE_LEVEL_INSTRUCTION,
               (
-                  "If detected=True, set the field 'value' to the primary genre label"
-                  " (e.g., 'tutorial/how-to', 'review', 'vlog', 'skit', 'demo')."
+                  "Set 'value' to a JSON object string with exactly these keys:"
+                  " primary_genre, sub_genre, secondary_genre,"
+                  " secondary_sub_genres, other_genres."
               ),
               (
-                  "If True, explicitly name the primary genre and (optionally) a"
-                  " secondary genre in the evidence."
+                  "primary_genre, secondary_genre: one allowed level label each"
+                  " (lowercase). Rank by emphasis. Use empty string if N/A."
               ),
               (
-                  "Return True if and only if you can identify a clear primary"
-                  " genre based on what the content is doing."
+                  "other_genres: JSON array of allowed level labels for 3rd rank"
+                  " and below, or [] if none."
+              ),
+              (
+                  "sub_genre: free text refining primary_genre, or empty string."
+              ),
+              (
+                  "secondary_sub_genres: free text refining secondary_genre, or"
+                  " empty string."
+              ),
+              (
+                  'Example value:'
+                  ' {"primary_genre":"beauty","sub_genre":"lipstick review",'
+                  '"secondary_genre":"lifestyle","secondary_sub_genres":"",'
+                  '"other_genres":["entertainment"]}'
+              ),
+              (
+                  "Return detected=True if and only if primary_genre is set to a"
+                  " valid level label."
+              ),
+              (
+                  "Summarize ranking rationale in evidence and rationale."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
@@ -630,7 +665,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="emotional_tone",
           name="Emotional Tone",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="STYLE_CLASSIFICATION",
@@ -665,7 +700,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="audio_quality",
           name="Audio Quality",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
@@ -692,7 +727,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="video_quality",
           name="Video Quality",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
@@ -720,7 +755,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="lighting_quality",
           name="Lighting Quality",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
@@ -748,7 +783,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="camera_movement",
           name="Camera Movement",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
@@ -779,7 +814,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="editing_style",
           name="Editing Style",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="STYLE_CLASSIFICATION",
@@ -813,9 +848,41 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
+          id="color_grade",
+          name="Color Grade",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="VISUAL_STYLE",
+          evaluation_criteria="""
+              The overall color grading / look of the content can be characterized
+              (e.g., warm, cool, neutral, high-contrast, muted/desaturated, vibrant,
+              cinematic, flat/natural, vintage/faded).
+          """,
+          prompt_template="""
+              Can you characterize the overall color grade or visual look of this content?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              (
+                  "If detected=True, set the field 'value' to the primary color-grade"
+                  " label (e.g., 'warm', 'cool', 'high-contrast', 'muted', 'vibrant',"
+                  " 'cinematic', 'natural/flat')."
+              ),
+              (
+                  "Return True if and only if the color grade is clearly inferable"
+                  " from the visuals."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
           id="narration_present",
           name="Narration",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="STYLE_CLASSIFICATION",
@@ -845,7 +912,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="audio_type",
           name="Audio Type",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="STYLE_CLASSIFICATION",
@@ -879,7 +946,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="music_dialogue_balance",
           name="Music–Dialogue Balance",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
@@ -909,7 +976,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="speech_pace_clarity",
           name="Speech Pace & Clarity",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
@@ -940,7 +1007,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="keyword_usage_seo_intent",
           name="Keyword Usage (SEO Intent)",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="DISCOVERY_SEO",
@@ -974,7 +1041,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="narration_style_scripted_vs_organic",
           name="Narration Style (Scripted vs Organic)",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="STYLE_CLASSIFICATION",
@@ -1003,13 +1070,13 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
           id="language_accent_detection",
           name="Language / Accent Detection",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="LANGUAGE",
@@ -1041,9 +1108,72 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
+          id="secondary_language",
+          name="Secondary Language",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="LANGUAGE",
+          evaluation_criteria="""
+              A secondary spoken language (different from the primary language) is
+              clearly used in the content. If only one language is present, return False.
+          """,
+          prompt_template="""
+              Is a secondary spoken language clearly used in this content in addition
+              to the primary language?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              (
+                  "If detected=True, set the field 'value' to the secondary language"
+                  " label (e.g., 'English', 'Hindi', 'Spanish')."
+              ),
+              (
+                  "Return True if and only if a distinct secondary language is"
+                  " clearly spoken, not just occasional loanwords."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
+          id="content_buckets",
+          name="Content Buckets",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="CONTENT_TAXONOMY",
+          evaluation_criteria="""
+              The content fits one or more recognizable content buckets used for
+              social/influencer classification (e.g., tutorial/how-to, review/unboxing,
+              lifestyle/vlog, GRWM, haul, testimonial, demo, entertainment/skit,
+              behind-the-scenes, challenge, educational explainer, product showcase).
+          """,
+          prompt_template="""
+              Can you assign this content to one or more clear content buckets?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              (
+                  "If detected=True, set the field 'value' to a comma-separated list"
+                  " of bucket labels, with the best-fit bucket first."
+              ),
+              (
+                  "Return True if and only if at least one content bucket clearly"
+                  " applies based on what the video/image is doing."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
           id="product_screen_time",
           name="Product Screen Time",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="BRAND_INTEGRATION",
@@ -1072,9 +1202,44 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
+          id="product_in_hand_seconds",
+          name="Product In Hand (seconds)",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="BRAND_INTEGRATION",
+          evaluation_criteria="""
+              The product is physically held in hand (or clearly handled) by a person
+              for a meaningful duration. Estimate approximate seconds and timestamps.
+          """,
+          prompt_template="""
+              Is the product held in hand or clearly handled for a meaningful duration,
+              and if so for approximately how many seconds?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              (
+                  "If detected=True, set the field 'value' to the estimated seconds"
+                  " held in hand (e.g., '12' or '12s')."
+              ),
+              (
+                  "In evidence, cite timestamps where the product is in hand and"
+                  " explain your duration estimate."
+              ),
+              (
+                  "Return True if and only if the product is held or handled in hand"
+                  " for more than a brief incidental moment."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
           id="integration_style",
           name="Integration Style",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="BRAND_INTEGRATION",
@@ -1110,7 +1275,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="cultural_relevance_local_global",
           name="Cultural Relevance (Local vs Global)",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="CULTURE",
@@ -1145,7 +1310,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="creator_archetype",
           name="Creator Archetype",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="STYLE_CLASSIFICATION",
@@ -1179,7 +1344,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="genuine_vs_ad",
           name="Genuine Content (Not Advertisement)",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TRUST",
@@ -1195,17 +1360,27 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
               (
-                  "Assess whether the creator delivery and framing feel authentic"
-                  " (UGC/real moment/personal voice) versus ad-like (promotional,"
-                  " scripted, polished commercial intent)."
+                  "Assess whether the creator delivery and framing feel natural"
+                  " (UGC/real moment/personal voice) versus polished (promotional,"
+                  " scripted, produced commercial intent)."
               ),
               (
-                  "If detected=True, set the field 'value' to one of:"
-                  " 'genuine/organic' or 'ad-like/scripted'."
+                  "Always set 'value' to exactly one of: 'natural' or 'polished'"
+                  " — for both detected=True and detected=False responses."
               ),
               (
-                  "Return True if and only if the content feels genuinely organic"
-                  " and not scripted as an advertisement."
+                  "Use 'natural' for organic creator voice, conversational delivery,"
+                  " and content that does not feel like a scripted advertisement."
+              ),
+              (
+                  "Use 'polished' for rehearsed scripts, studio/commercial production,"
+                  " overt promotional selling, or ad-like framing."
+              ),
+              (
+                  "Return detected=True if and only if value is 'natural'."
+              ),
+              (
+                  "Return detected=False if value is 'polished'."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
@@ -1216,7 +1391,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
       VideoFeature(
           id="shorts_hashtag_strategy",
           name="Hashtag Strategy",
-          category=VideoFeatureCategory.CONTENT_QUALITY,
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="DISCOVERY_SEO",

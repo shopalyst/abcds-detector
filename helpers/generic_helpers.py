@@ -446,6 +446,7 @@ def build_features_for_bq(
   evaluated_features = []
   evaluated_features.extend(video_assessment.long_form_abcd_evaluated_features)
   evaluated_features.extend(video_assessment.shorts_evaluated_features)
+  evaluated_features.extend(video_assessment.content_quality_evaluated_features)
   # Insert all feature configs first
   for eval_feature in evaluated_features:
     if config.creative_provider_type == models.CreativeProviderType:
