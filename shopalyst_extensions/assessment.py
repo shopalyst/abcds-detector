@@ -8,6 +8,7 @@ import models
 from configuration import Configuration
 from gcp_api_services import gcs_api_service
 from helpers import generic_helpers
+from shopalyst_extensions.feature_grouping import resolve_ci_macro_group
 
 # Features where detected=True means a problem (inverse pass/fail for scoring).
 RISK_FEATURE_IDS = frozenset({
@@ -82,7 +83,7 @@ def _feature_evaluation_to_dict(
   f = eval_feature.feature
   passed = feature_passed(eval_feature)
   is_risk = f.id in RISK_FEATURE_IDS
-  return {
+  row = {
       "pipeline": pipeline,
       "feature_id": f.id,
       "feature_name": f.name,
@@ -102,6 +103,9 @@ def _feature_evaluation_to_dict(
       "strengths": eval_feature.strengths or "",
       "weaknesses": eval_feature.weaknesses or "",
   }
+  if pipeline == "CONTENT_INTELLIGENCE":
+    row["feature_macro_group"] = resolve_ci_macro_group(f)
+  return row
 
 
 def write_assessment_to_file(

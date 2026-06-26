@@ -160,7 +160,7 @@ def get_shorts_feature_configs() -> list[VideoFeature]:
                 "audio_analysis": {{
                     "background_noise_level": "Low" | "Medium" | "High",
                     "music_overlap_interference": boolean, # Does background music drown out the voice?
-                    "speaker_gender_estimate": "Male" | "Female" | "Multiple" | "N/A"
+                    "speaker_gender_estimate": "Male" | "Female" | "N/A"
                 }},
                 "temporal_segments": [
                     {{
@@ -184,7 +184,27 @@ def get_shorts_feature_configs() -> list[VideoFeature]:
             3. Evaluate the **vocal_clarity_score**—reduce this if background music or noise makes speech hard to follow.
             4. Determine if the "Hook" (0:00-0:02) contains speech, as this is a high-retention signal.
         """,
-          extra_instructions=[],
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              (
+                  "If detected=True, set 'value' to exactly one of: 'Male',"
+                  " 'Female', or 'N/A'."
+              ),
+              (
+                  "Use 'N/A' when there is no speech, gender cannot be inferred,"
+                  " or multiple speakers make a single male/female label unreliable."
+              ),
+              (
+                  "If detected=False, set 'value' to 'N/A'."
+              ),
+              (
+                  "Put vocal density, clarity, and voice-type details in"
+                  " 'evidence' and 'rationale'."
+              ),
+              (
+                  "Return True if and only if audible human speech is present."
+              ),
+          ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
           include_in_evaluation=True,

@@ -55,7 +55,11 @@ class FeaturesConfigsHandler:
       from shopalyst_extensions.feature_registry import (
           get_content_intelligence_feature_configs,
       )
-      return get_content_intelligence_feature_configs()
+      return [
+          feature
+          for feature in get_content_intelligence_feature_configs()
+          if feature.include_in_evaluation
+      ]
     else:
       logging.log("Category %s not supported. Please check", category)
 

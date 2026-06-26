@@ -3,51 +3,18 @@
 import argparse
 
 from configuration import Configuration
+from shopalyst_extensions.feature_registry import (
+    get_content_intelligence_feature_configs,
+)
 
-BRAND_COLLAB_ABCD_FEATURE_IDS = [
-    "a_dynamic_start",
-    "a_quick_pacing",
-    "a_quick_pacing_1st_5_secs",
-    "a_supers",
-    "a_supers_with_audio",
-    "b_brand_visuals",
-    "b_brand_visuals_1st_5_secs",
-    "b_brand_mention_speech",
-    "b_brand_mention_speech_1st_5_secs",
-    "b_product_visuals",
-    "b_product_visuals_1st_5_secs",
-    "b_product_mention_text",
-    "b_product_mention_text_1st_5_secs",
-    "b_product_mention_speech",
-    "b_product_mention_speech_1st_5_secs",
-    "c_presence_of_people",
-    "c_presence_of_people_1st_5_secs",
-    "c_visible_face",
-    "c_visible_face_close_up",
-    "d_call_to_action_speech",
-    "d_call_to_action_text",
-    "d_audio_speech_early_1st_5_secs",
-]
 
-CONTENT_QUALITY_FEATURE_IDS = [
-    "content_clarity_focus",
-    "narrative_structure",
-    "informational_depth",
-    "production_quality",
-    "actionable_value",
-    "audience_relevance",
-    "engagement_potential",
-    "low_effort_spam",
-    "authenticity_trustworthiness",
-    "misinformation_risk",
-    "clickbait_detection",
-    "negativity_hate_speech",
-    "brand_safety",
-    "audience_appropriateness",
-    "cultural_sensitivity",
-    "genuine_vs_ad",
-    "shorts_hashtag_strategy",
-]
+def get_content_quality_feature_ids() -> list[str]:
+  """Enabled content-intelligence feature IDs (matches -bcp preset)."""
+  return [
+      feature.id
+      for feature in get_content_intelligence_feature_configs()
+      if feature.include_in_evaluation
+  ]
 
 
 def resolve_run_flags(args: argparse.Namespace) -> dict:
@@ -57,12 +24,10 @@ def resolve_run_flags(args: argparse.Namespace) -> dict:
         "extract_brand_metadata": True,
         "use_annotations": args.use_annotations,
         "use_llms": True,
-        "run_long_form_abcd": True,
-        "run_shorts": True,
+        "run_long_form_abcd": False,
+        "run_shorts": False,
         "run_content_quality": True,
-        "features_to_evaluate": (
-            BRAND_COLLAB_ABCD_FEATURE_IDS + CONTENT_QUALITY_FEATURE_IDS
-        ),
+        "features_to_evaluate": get_content_quality_feature_ids(),
         "creative_provider_type": args.creative_provider_type or "GCS",
     }
 
@@ -106,8 +71,9 @@ def register_cli_arguments(parser: argparse.ArgumentParser) -> None:
       "-brand_collab_preset",
       "-bcp",
       help=(
-          "Run brand-collab preset: selected ABCD features + all content-quality "
-          "features, LLM-only (no annotations), and auto-extract brand metadata."
+          "Run brand-collab preset: enabled content-intelligence features only "
+          "(no long-form ABCD or Shorts), LLM-only, and auto-extract brand "
+          "metadata."
       ),
       action="store_true",
       default=False,
