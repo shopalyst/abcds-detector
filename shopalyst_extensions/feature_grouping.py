@@ -11,18 +11,48 @@ CI_MACRO_GROUP_MAP: dict[str, str] = {
     "TRUST": "SAFETY_TRUST",
     "STYLE_CLASSIFICATION": "STYLE",
     "VISUAL_STYLE": "STYLE",
+    "COMMUNICATION": "STYLE",
+    "FASHION_AESTHETIC": "STYLE",
+    "GROOMING": "STYLE",
+    "SOCIOECONOMIC": "STYLE",
+    "SKIN_CARE_CONSCIOUSNESS": "STYLE",
     "GENRE_LEVELS": "TAXONOMY",
     "CONTENT_TAXONOMY": "TAXONOMY",
     "LANGUAGE": "TAXONOMY",
     "CULTURE": "TAXONOMY",
     "BRAND_INTEGRATION": "BRAND_DISCOVERY",
     "DISCOVERY_SEO": "BRAND_DISCOVERY",
+    "CTA": "BRAND_DISCOVERY",
 }
 
-# How many Gemini calls for full CI. Set to 2 or 3.
+# Max parallel Gemini calls for full CI (balanced grouping by feature_group).
 CI_LLM_BATCH_MODE = 3
 
-# Macro taxonomy -> LLM batch (3 calls: ~14 + 8 + 17 features).
+# Balanced LLM batches by feature_group (~12 enabled features per call).
+CI_FEATURE_GROUP_LLM_BATCH: dict[str, str] = {
+    "TECHNICAL_QUALITY": "CI_TECHNICAL_TRUST_LANGUAGE",
+    "TRUST": "CI_TECHNICAL_TRUST_LANGUAGE",
+    "LANGUAGE": "CI_TECHNICAL_TRUST_LANGUAGE",
+    "VISUAL_STYLE": "CI_VISUAL_STYLE_GENRE",
+    "STYLE_CLASSIFICATION": "CI_VISUAL_STYLE_GENRE",
+    "GENRE_LEVELS": "CI_VISUAL_STYLE_GENRE",
+    "CULTURE": "CI_VISUAL_STYLE_GENRE",
+    "GROOMING": "CI_VISUAL_STYLE_GENRE",
+    "FASHION_AESTHETIC": "CI_BRAND_LIFESTYLE_DISCOVERY",
+    "SOCIOECONOMIC": "CI_BRAND_LIFESTYLE_DISCOVERY",
+    "SKIN_CARE_CONSCIOUSNESS": "CI_BRAND_LIFESTYLE_DISCOVERY",
+    "CONTENT_TAXONOMY": "CI_BRAND_LIFESTYLE_DISCOVERY",
+    "DISCOVERY_SEO": "CI_BRAND_LIFESTYLE_DISCOVERY",
+    "BRAND_INTEGRATION": "CI_BRAND_LIFESTYLE_DISCOVERY",
+    "COMMUNICATION": "CI_BRAND_LIFESTYLE_DISCOVERY",
+    "CTA": "CI_BRAND_LIFESTYLE_DISCOVERY",
+    # Disabled today; mapped for even load if re-enabled.
+    "QUALITY_CLARITY": "CI_TECHNICAL_TRUST_LANGUAGE",
+    "VALUE": "CI_TECHNICAL_TRUST_LANGUAGE",
+    "SAFETY": "CI_TECHNICAL_TRUST_LANGUAGE",
+}
+
+# Legacy macro collapse (CI_LLM_BATCH_MODE 1 or 2).
 CI_LLM_BATCH_FROM_MACRO_3: dict[str, str] = {
     "CORE_QUALITY": "QUALITY_TECH",
     "TECHNICAL": "QUALITY_TECH",
@@ -32,7 +62,6 @@ CI_LLM_BATCH_FROM_MACRO_3: dict[str, str] = {
     "BRAND_DISCOVERY": "STYLE_CONTEXT",
 }
 
-# Macro taxonomy -> LLM batch (2 calls: ~22 + 17 features).
 CI_LLM_BATCH_FROM_MACRO_2: dict[str, str] = {
     "CORE_QUALITY": "QUALITY_AND_SAFETY",
     "TECHNICAL": "QUALITY_AND_SAFETY",
@@ -50,15 +79,20 @@ def resolve_ci_macro_group(feature: VideoFeature) -> str:
 
 
 def resolve_ci_llm_batch(feature: VideoFeature) -> str:
-  """LLM batch key (2 or 3 calls for full CI, per CI_LLM_BATCH_MODE)."""
+  """LLM batch key for grouping CI features into Gemini calls."""
+  legacy_group = getattr(feature, "feature_group", None) or "GENERAL"
+  if CI_LLM_BATCH_MODE == 3:
+    return CI_FEATURE_GROUP_LLM_BATCH.get(legacy_group, legacy_group)
   macro = resolve_ci_macro_group(feature)
   if CI_LLM_BATCH_MODE == 2:
     return CI_LLM_BATCH_FROM_MACRO_2.get(macro, macro)
-  return CI_LLM_BATCH_FROM_MACRO_3.get(macro, macro)
+  if CI_LLM_BATCH_MODE == 1:
+    return CI_LLM_BATCH_FROM_MACRO_3.get(macro, macro)
+  return CI_FEATURE_GROUP_LLM_BATCH.get(legacy_group, legacy_group)
 
 
 def group_by_feature_group(feature_configs: list[VideoFeature]) -> dict[str, list[VideoFeature]]:
-  """Group CI features into LLM batches (CI_LLM_BATCH_MODE calls when all features run)."""
+  """Group CI features into LLM batches."""
   grouped_features: dict[str, list[VideoFeature]] = {}
   for feature in feature_configs:
     group_key = resolve_ci_llm_batch(feature)

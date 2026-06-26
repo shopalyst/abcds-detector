@@ -35,14 +35,350 @@ from models import (
     VideoFeatureSubCategory,
 )
 
-# Top-level genre labels (primary / secondary / other). Rank by emphasis in content.
-GENRE_LEVEL_LABELS = (
-    "food, lifestyle, entertainment, beauty, fashion, fitness, travel, "
-    "education, tech, gaming, finance, parenting, home"
+# Suggested top-level genre labels (guidance only — not a closed enum).
+GENRE_LEVEL_EXAMPLE_LABELS = (
+    "travel, unknown, entertainment, beauty, fashion, food, lifestyle,"
+    " photography, health and fitness, business, pet, sports, art and craft,"
+    " automobile, education, other, parenting, current affairs, games and apps"
 )
-GENRE_LEVEL_INSTRUCTION = (
-    "Genre level labels must be chosen ONLY from this list (use lowercase): "
-    f"{GENRE_LEVEL_LABELS}."
+GENRE_LEVEL_GUIDANCE = (
+    "Set primary_genre, secondary_genre, and each entry in other_genres to"
+    " short genre labels (lowercase preferred). Common examples include:"
+    f" {GENRE_LEVEL_EXAMPLE_LABELS}."
+    " These are suggestions only — use the best-fit label or a close synonym;"
+    " do not treat this list as a closed enum."
+)
+
+BRAND_VISIBILITY_IN_CONTENT_LEVELS = (
+    "None", "Incidental", "Prominent", "Featured"
+)
+BRAND_VISIBILITY_IN_CONTENT_INSTRUCTION = (
+    "Brand visibility level must be exactly one of: None, Incidental, Prominent,"
+    " Featured. None = no brand visible; Incidental = visible but not emphasized;"
+    " Prominent = clearly visible or central; Featured = intentionally showcased."
+)
+
+COMMUNICATION_STYLE_LEVELS = (
+    "educational",
+    "direct",
+    "humorous",
+    "storytelling",
+    "conversational",
+    "testimonial",
+    "promotional",
+    "inspirational",
+    "demonstrative",
+)
+COMMUNICATION_STYLE_INSTRUCTION = (
+    "Communication style must be exactly one of:"
+    f" {', '.join(COMMUNICATION_STYLE_LEVELS)}."
+    " educational = teaches or explains; direct = blunt, clear, to-the-point;"
+    " humorous = comedy or playful tone drives delivery; storytelling = narrative"
+    " arc carries the message; conversational = casual peer-to-peer chat;"
+    " testimonial = personal experience or review; promotional = sell or CTA-forward;"
+    " inspirational = motivational or aspirational; demonstrative = show-how demo"
+    " or hands-on use."
+)
+
+CTA_TYPE_LEVELS = (
+    "comment_prompt",
+    "purchase_prompt",
+    "share_prompt",
+    "poll_quiz",
+    "link_in_bio",
+    "follow_subscribe",
+    "save_prompt",
+    "learn_more",
+    "dm_prompt",
+)
+CTA_TYPE_INSTRUCTION = (
+    "Call-to-action type must be exactly one of:"
+    f" {', '.join(CTA_TYPE_LEVELS)}."
+    " comment_prompt = ask viewers to comment (e.g. comment a keyword);"
+    " purchase_prompt = shop/buy/order or use a discount code;"
+    " share_prompt = share, tag, or repost;"
+    " poll_quiz = poll, quiz, or choose-between engagement;"
+    " link_in_bio = link in bio or tap the link below;"
+    " follow_subscribe = follow or subscribe;"
+    " save_prompt = save or bookmark the post;"
+    " learn_more = soft explore/check-it-out ask without direct purchase;"
+    " dm_prompt = DM or message for details or link."
+)
+
+FASHION_AESTHETIC_LEVELS = (
+    "casual",
+    "elegant",
+    "ethnic",
+    "sporty",
+)
+FASHION_AESTHETIC_INSTRUCTION = (
+    "Fashion aesthetic must be exactly one of:"
+    f" {', '.join(FASHION_AESTHETIC_LEVELS)}."
+    " casual = relaxed everyday wear or simple street-casual styling;"
+    " elegant = refined, polished, formal, glam, or luxury-leaning styling;"
+    " ethnic = traditional or cultural dress, regional attire, or heritage"
+    " fashion cues (including fusion looks where traditional dress dominates);"
+    " sporty = athleisure, activewear, or gym-to-street athletic styling."
+)
+
+GROOMING_LEVELS = ("well_groomed", "casual")
+GROOMING_INSTRUCTION = (
+    "Grooming level must be exactly one of:"
+    f" {', '.join(GROOMING_LEVELS)}."
+    " well_groomed = neat hair, intentional makeup or skincare, polished personal"
+    " presentation;"
+    " casual = low-key or natural grooming — minimal makeup, relaxed hair,"
+    " everyday upkeep."
+)
+
+SOCIOECONOMIC_INDICATOR_LEVELS = ("premium", "mid_tier", "budget")
+SOCIOECONOMIC_INDICATOR_INSTRUCTION = (
+    "Socioeconomic indicator must be exactly one of:"
+    f" {', '.join(SOCIOECONOMIC_INDICATOR_LEVELS)}."
+    " premium = luxury or high-end lifestyle cues (upscale setting, premium"
+    " products, high-end decor or travel);"
+    " mid_tier = mainstream, middle-market, relatable everyday setting and"
+    " products;"
+    " budget = value-focused, economy-tier products, deals, or basic/minimal"
+    " setting cues."
+)
+
+SKIN_CARE_CONSCIOUSNESS_LEVELS = (
+    "minimal",
+    "basic_routine",
+    "moderate",
+    "high_ingredient_focused",
+)
+SKIN_CARE_CONSCIOUSNESS_INSTRUCTION = (
+    "Skin care consciousness must be exactly one of:"
+    f" {', '.join(SKIN_CARE_CONSCIOUSNESS_LEVELS)}."
+    " minimal = little or no skincare focus (makeup-only, fashion, or no"
+    " regimen cues);"
+    " basic_routine = simple routine shown or mentioned (e.g. cleanse,"
+    " moisturize, sunscreen);"
+    " moderate = clear multi-step skincare routine or regular skin-health"
+    " care emphasis;"
+    " high_ingredient_focused = strong ingredient, active, or formulation"
+    " focus (e.g. retinol, vitamin C, SPF science, actives education)."
+)
+
+AUTHENTICITY_FEEL_LEVELS = (
+    "relatable",
+    "curated",
+    "highly_polished",
+    "raw_authentic",
+)
+AUTHENTICITY_FEEL_INSTRUCTION = (
+    "Authenticity feel must be exactly one of:"
+    f" {', '.join(AUTHENTICITY_FEEL_LEVELS)}."
+    " relatable = everyday, audience-connected, down-to-earth creator delivery;"
+    " curated = intentional, aesthetic creator style with controlled presentation;"
+    " highly_polished = studio-grade, commercial, or heavily produced presentation;"
+    " raw_authentic = unfiltered, spontaneous, lo-fi real-moment feel."
+)
+
+# Suggested tone labels for emotional_tone (guidance only — value is free text, not an enum).
+EMOTIONAL_TONE_EXAMPLE_LABELS = (
+    "relatable, energetic, honest, conversational, educational, cultural,"
+    " aesthetic, joyful, emotional, aspirational, heartfelt, dramatic,"
+    " humorous, playful, witty, informative, bold and confident,"
+    " calm and minimalist, reflective, nostalgic, critical, passionate,"
+    " spiritual, authoritative, empowering, enthusiastic, raw and vulnerable,"
+    " inspirational, celebratory, warm and nurturing, curated"
+)
+EMOTIONAL_TONE_GUIDANCE = (
+    "Set 'value' to a short primary tone label (lowercase preferred)."
+    " Common examples include:"
+    f" {EMOTIONAL_TONE_EXAMPLE_LABELS}."
+    " These are suggestions only — use the best-fit label or a close synonym;"
+    " do not treat this list as a closed enum."
+)
+
+# Suggested editing-style labels (guidance only — value is free text, not an enum).
+EDITING_STYLE_EXAMPLE_LABELS = (
+    "Minimal Editing, Raw & Unedited, Trending Template (CapCut / Instagram),"
+    " Montage, B-roll Heavy, Transition-Heavy, Speed Ramp / Reverse"
+)
+EDITING_STYLE_GUIDANCE = (
+    "Set 'value' to a comma-separated list of editing-style labels, with the"
+    " best-fit or dominant style first. Use one label when a single style"
+    " clearly applies."
+    " Common examples include:"
+    f" {EDITING_STYLE_EXAMPLE_LABELS}."
+    " These are suggestions only — use the best-fit labels or close synonyms;"
+    " do not treat this list as a closed enum."
+)
+
+# Suggested camera-movement labels (guidance only — value is free text, not an enum).
+CAMERA_MOVEMENT_EXAMPLE_LABELS = (
+    "Selfie-mode, Handheld, Static, POV (Point of View), Cinematic Movement"
+)
+CAMERA_MOVEMENT_GUIDANCE = (
+    "Set 'value' to a comma-separated list of camera-movement or framing"
+    " labels, with the best-fit or dominant style first. Use one label when a"
+    " single style clearly applies."
+    " Common examples include:"
+    f" {CAMERA_MOVEMENT_EXAMPLE_LABELS}."
+    " These are suggestions only — use the best-fit labels or close synonyms;"
+    " do not treat this list as a closed enum."
+)
+
+TEXT_OVERLAY_LEVELS = ("none", "light", "medium", "heavy")
+TEXT_OVERLAY_INSTRUCTION = (
+    "Text overlay density must be exactly one of:"
+    f" {', '.join(TEXT_OVERLAY_LEVELS)}."
+    " none = no meaningful on-screen text or graphics added in edit;"
+    " light = sparse or occasional overlays (brief titles, few labels);"
+    " medium = moderate overlay use (regular captions, several text moments);"
+    " heavy = frequent or persistent text throughout most of the content."
+)
+
+FACE_VISIBILITY_INSTRUCTION = (
+    "Set 'value' to a face visibility score from 0 to 100 (string integer,"
+    " e.g. '0', '35', '72', '95')."
+    " 0 = no human face clearly visible;"
+    " 1–25 = brief or incidental face appearances;"
+    " 26–50 = face visible but not a main focus;"
+    " 51–75 = face clearly visible for a meaningful portion;"
+    " 76–100 = close-up face dominates or anchors most of the content."
+)
+
+# Suggested color-grade labels (guidance only — value is free text, not an enum).
+COLOR_GRADE_EXAMPLE_LABELS = (
+    "Warm, Cool, Neutral, High-Contrast, Muted / Desaturated, Vibrant,"
+    " Cinematic, Flat / Natural, Vintage / Faded"
+)
+COLOR_GRADE_GUIDANCE = (
+    "Set 'value' to a comma-separated list of color-grade or visual-look"
+    " labels, with the best-fit or dominant look first. Use one label when a"
+    " single look clearly applies."
+    " Common examples include:"
+    f" {COLOR_GRADE_EXAMPLE_LABELS}."
+    " These are suggestions only — use the best-fit labels or close synonyms;"
+    " do not treat this list as a closed enum."
+)
+
+LIGHTING_QUALITY_INSTRUCTION = (
+    "Set 'value' to a decimal lighting quality score from 0 to 5"
+    " (e.g. '0', '2.5', '3.5', '4.2'). Any decimal in that range is valid."
+    " 0 = unusable — subject not visible or lighting fails completely;"
+    " 1 = very poor — severely under/overexposed, key detail lost;"
+    " 2 = poor — notable darkness, glare, or uneven light;"
+    " 3 = acceptable — subject visible, minor lighting issues;"
+    " 4 = good — even, clear lighting with good subject visibility;"
+    " 5 = excellent — flattering, well-balanced, supports fine detail."
+)
+
+TECHNICAL_QUALITY_TIER_LEVELS = ("high", "medium", "low")
+AUDIO_QUALITY_INSTRUCTION = (
+    "Audio quality tier must be exactly one of:"
+    f" {', '.join(TECHNICAL_QUALITY_TIER_LEVELS)}."
+    " high = clear and intelligible — speech easy to hear, consistent volume,"
+    " no distracting noise or distortion;"
+    " medium = generally understandable with minor issues — slight background"
+    " noise, occasional muffling, or uneven volume that does not block"
+    " comprehension;"
+    " low = poor — clipping, severe noise, muffled or inconsistent audio that"
+    " hinders understanding."
+)
+VIDEO_QUALITY_INSTRUCTION = (
+    "Video quality tier must be exactly one of:"
+    f" {', '.join(TECHNICAL_QUALITY_TIER_LEVELS)}."
+    " high = sharp, stable, well-framed, comfortable to watch;"
+    " medium = watchable with minor issues — slight blur, mild shake,"
+    " compression artifacts, or framing quirks that do not seriously distract;"
+    " low = poor — excessive blur, severe shake, bad framing, low resolution,"
+    " or artifacts that make viewing uncomfortable."
+)
+
+AUDIO_TYPE_LEVELS = (
+    "background_music_only",
+    "original_voice",
+    "dialogue_driven",
+    "mixed",
+)
+AUDIO_TYPE_INSTRUCTION = (
+    "Audio type must be exactly one of:"
+    f" {', '.join(AUDIO_TYPE_LEVELS)}."
+    " background_music_only = music or trending sound carries the audio with"
+    " no meaningful speech or narration;"
+    " original_voice = creator voice-over, narration, or original spoken track"
+    " drives the content (speech-led, music optional or absent);"
+    " dialogue_driven = on-camera conversation or direct-to-camera speech"
+    " drives the content;"
+    " mixed = no single type clearly dominates — e.g. equal voice-over and"
+    " music, or shifting dialogue and music-led segments."
+)
+
+MUSIC_DIALOGUE_BALANCE_LEVELS = (
+    "balanced",
+    "music_dominant",
+    "dialogue_dominant",
+)
+MUSIC_DIALOGUE_BALANCE_INSTRUCTION = (
+    "Music–dialogue balance must be exactly one of:"
+    f" {', '.join(MUSIC_DIALOGUE_BALANCE_LEVELS)}."
+    " balanced = music and speech coexist at similar perceptual weight and"
+    " speech remains intelligible;"
+    " music_dominant = music is louder or more prominent, risking or reducing"
+    " speech intelligibility;"
+    " dialogue_dominant = speech clearly leads and music is subtle, absent, or"
+    " clearly in the background."
+)
+
+SPEECH_PACE_LEVELS = ("fast", "moderate", "slow")
+SPEECH_PACE_INSTRUCTION = (
+    "Speech pace must be exactly one of:"
+    f" {', '.join(SPEECH_PACE_LEVELS)}."
+    " fast = rapid delivery that may feel rushed;"
+    " moderate = comfortable, easy-to-follow pace for typical viewers;"
+    " slow = deliberately slow or drawn-out delivery."
+)
+
+SPEECH_CLARITY_LEVELS = ("clear", "accented_but_clear", "unclear")
+SPEECH_CLARITY_INSTRUCTION = (
+    "Speech clarity must be exactly one of:"
+    f" {', '.join(SPEECH_CLARITY_LEVELS)}."
+    " clear = easy to understand with good articulation;"
+    " accented_but_clear = noticeable accent or dialect but still easy to"
+    " follow;"
+    " unclear = mumbled, heavily overlapped, or hard to understand."
+)
+
+NARRATION_STYLE_EXAMPLE_LABELS = (
+    "First Person Storytelling, Third Person Narration, Direct Address,"
+    " Voice-over Exposition, Tutorial / Instructional, Testimonial / Personal"
+    " Experience, Interview / Conversation, Dramatic Monologue"
+)
+NARRATION_STYLE_GUIDANCE = (
+    "Set 'value' to a short primary narration-style label describing how"
+    " speech is delivered (point of view, format, and narrative mode)."
+    " Common examples include:"
+    f" {NARRATION_STYLE_EXAMPLE_LABELS}."
+    " These are suggestions only — use the best-fit label or a close synonym;"
+    " do not treat this list as a closed enum."
+)
+
+LANGUAGE_ACCENT_EXAMPLE_LABELS = (
+    "Hinglish, Multilingual, Hindi, English (Indian), English (US),"
+    " English (UK), Tamil, Telugu, Bengali, Marathi, Spanish (LatAm),"
+    " Arabic, French"
+)
+LANGUAGE_ACCENT_GUIDANCE = (
+    "Set 'value' to a short primary language or language-mix label when"
+    " speech is present (free text, not an enum)."
+    " Common examples include:"
+    f" {LANGUAGE_ACCENT_EXAMPLE_LABELS}."
+    " Hinglish = Hindi–English code-mixing; Multilingual = two or more"
+    " languages used substantially with no single clear primary language."
+    " These are suggestions only — use the best-fit label or a close synonym;"
+    " do not treat this list as a closed enum."
+)
+
+SECONDARY_LANGUAGE_GUIDANCE = (
+    "Set 'value' to the secondary spoken language label (free text, not an"
+    " enum) when a distinct second language is clearly used — e.g. 'English',"
+    " 'Hindi', 'Spanish'. Use empty or omit only if not applicable."
 )
 
 
@@ -82,7 +418,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
@@ -116,7 +452,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
@@ -149,7 +485,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
@@ -224,7 +560,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
@@ -261,7 +597,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
@@ -296,7 +632,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
@@ -330,44 +666,64 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       # ------------------------------------------------------------------ #
       # Group 3 – Authenticity & Trust                                      #
       # ------------------------------------------------------------------ #
       VideoFeature(
-          id="authenticity_trustworthiness",
-          name="Authenticity & Trustworthiness",
+          id="authenticity_feel",
+          name="Authenticity Feel",
           category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TRUST",
-          evaluation_criteria="""
-              The content appears honest, genuine, and grounded. The creator
-              seems authentic and not putting on an exaggerated or deceptive
-              persona. The content does not use manipulative tactics, false
-              urgency, or deceptive framing to influence the viewer.
+          evaluation_criteria=f"""
+              Classify the dominant authenticity feel of the content — how
+              relatable, curated, polished, or raw the creator delivery and
+              framing feels (not factual trust or misinformation; see
+              misinformation_risk).
+              {AUTHENTICITY_FEEL_INSTRUCTION}
           """,
           prompt_template="""
-              Does this content feel authentic and trustworthy — honest,
-              genuine, and not deceptive or manipulative?
+              What is the dominant authenticity feel of this content
+              (creator delivery and presentation)?
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              AUTHENTICITY_FEEL_INSTRUCTION,
               (
-                  "Assess whether the creator appears genuine, whether the"
-                  " claims feel honest, and whether any persuasion tactics"
-                  " feel transparent rather than manipulative."
+                  "Focus on delivery and presentation feel — not whether the"
+                  " content is an ad (genuine_vs_ad) or communication style alone."
               ),
               (
-                  "Return True if and only if the content feels authentic,"
-                  " trustworthy, and non-deceptive."
+                  "relatable vs curated: everyday peer connection vs intentional"
+                  " aesthetic creator control."
+              ),
+              (
+                  "raw_authentic vs highly_polished: spontaneous lo-fi moments vs"
+                  " studio/commercial production."
+              ),
+              (
+                  "curated vs highly_polished: styled creator content vs"
+                  " full commercial-grade polish."
+              ),
+              (
+                  "Always set 'value' to exactly one allowed label (lowercase)."
+              ),
+              (
+                  "Return detected=True if and only if authenticity feel is"
+                  " clearly inferable from delivery and framing."
+              ),
+              (
+                  "Return detected=False if feel is too neutral or generic"
+                  " to classify."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=False,
+          include_in_evaluation=True,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
@@ -408,7 +764,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
@@ -444,7 +800,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       # ------------------------------------------------------------------ #
@@ -489,7 +845,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
@@ -527,7 +883,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
@@ -561,7 +917,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
@@ -596,7 +952,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
-          include_in_evaluation=True,
+          include_in_evaluation=False,
           group_by=VideoSegment.FULL_VIDEO,
       ),
       # ------------------------------------------------------------------ #
@@ -611,8 +967,7 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           feature_group="GENRE_LEVELS",
           evaluation_criteria=f"""
               Classify content genre levels ranked by emphasis (most talked about
-              or shown first). Level labels use the same allowed list for
-              primary, secondary, and other. {GENRE_LEVEL_INSTRUCTION}
+              or shown first). {GENRE_LEVEL_GUIDANCE}
               Sub-genres are free text that refine a level (e.g. beauty → makeup
               tutorial).
           """,
@@ -622,19 +977,19 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
-              GENRE_LEVEL_INSTRUCTION,
+              GENRE_LEVEL_GUIDANCE,
               (
                   "Set 'value' to a JSON object string with exactly these keys:"
                   " primary_genre, sub_genre, secondary_genre,"
                   " secondary_sub_genres, other_genres."
               ),
               (
-                  "primary_genre, secondary_genre: one allowed level label each"
-                  " (lowercase). Rank by emphasis. Use empty string if N/A."
+                  "primary_genre, secondary_genre: short genre labels ranked by"
+                  " emphasis. Use empty string for secondary_genre if N/A."
               ),
               (
-                  "other_genres: JSON array of allowed level labels for 3rd rank"
-                  " and below, or [] if none."
+                  "other_genres: JSON array of additional genre labels for 3rd"
+                  " rank and below, or [] if none."
               ),
               (
                   "sub_genre: free text refining primary_genre, or empty string."
@@ -650,8 +1005,8 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
                   '"other_genres":["entertainment"]}'
               ),
               (
-                  "Return detected=True if and only if primary_genre is set to a"
-                  " valid level label."
+                  "Return detected=True if and only if primary_genre is set to"
+                  " a non-empty genre label."
               ),
               (
                   "Summarize ranking rationale in evidence and rationale."
@@ -669,27 +1024,233 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="STYLE_CLASSIFICATION",
-          evaluation_criteria="""
-              The content communicates a clear emotional tone (e.g. funny, serious,
-              inspirational, aggressive, empathetic, urgent, calm) that is consistent
-              for most of the content.
+          evaluation_criteria=f"""
+              The content communicates a clear emotional tone or mood that is
+              consistent for most of the content (delivery, visuals, and audio).
+              {EMOTIONAL_TONE_GUIDANCE}
           """,
           prompt_template="""
-              Is there a clear and mostly consistent emotional tone to this content?
+              What is the primary emotional tone of this content?
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              EMOTIONAL_TONE_GUIDANCE,
               (
-                  "If detected=True, set the field 'value' to the primary tone label"
-                  " (e.g., 'funny', 'serious', 'inspirational', 'aggressive')."
+                  "Tone is mood and emotional feel — not communication format"
+                  " (communication_style) or authenticity presentation"
+                  " (authenticity_feel)."
               ),
               (
-                  "If True, state the primary tone (and any notable tone shifts)"
-                  " in the evidence."
+                  "Pick one primary tone label. Use a second tone in evidence"
+                  " only if there is a clear shift mid-content."
               ),
               (
-                  "Return True if and only if the tone is clearly inferable from"
-                  " delivery, visuals, and audio."
+                  "Return detected=True if and only if the tone is clearly"
+                  " inferable from delivery, visuals, and audio."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
+          id="fashion_aesthetic",
+          name="Fashion Aesthetic",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="FASHION_AESTHETIC",
+          evaluation_criteria=f"""
+              Classify the dominant fashion aesthetic shown through outfits,
+              styling, and wardrobe cues visible in the content.
+              {FASHION_AESTHETIC_INSTRUCTION}
+          """,
+          prompt_template="""
+              What is the dominant fashion aesthetic in this content (outfits
+              and styling)?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              FASHION_AESTHETIC_INSTRUCTION,
+              (
+                  "Base the label on clothing, accessories, and styling visible"
+                  " on people in frame — not genre (genre_levels) or production"
+                  " polish alone."
+              ),
+              (
+                  "casual vs elegant: everyday relaxed wear vs refined, dressy,"
+                  " glam, or luxury-leaning presentation."
+              ),
+              (
+                  "ethnic = traditional, cultural, or regional attire is the"
+                  " dominant styling signal (include fusion when traditional"
+                  " elements clearly lead)."
+              ),
+              (
+                  "sporty vs casual: athletic/activewear-led vs general everyday"
+                  " relaxed wear."
+              ),
+              (
+                  "Always set 'value' to exactly one allowed label (lowercase)"
+                  " when a fashion aesthetic applies."
+              ),
+              (
+                  "Return detected=True if and only if outfit/fashion styling is"
+                  " visible and one label clearly fits."
+              ),
+              (
+                  "Return detected=False if fashion styling is not visible,"
+                  " not assessable, or too generic to classify."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
+          id="grooming",
+          name="Grooming",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="GROOMING",
+          evaluation_criteria=f"""
+              Classify the dominant personal grooming level visible on people
+              in the content — hair, makeup, skin, and overall neatness of
+              personal appearance (not clothing; see fashion_aesthetic).
+              {GROOMING_INSTRUCTION}
+          """,
+          prompt_template="""
+              What is the dominant grooming level in this content (hair, makeup,
+              skin, personal presentation)?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              GROOMING_INSTRUCTION,
+              (
+                  "Assess personal grooming only — not outfits (fashion_aesthetic)"
+                  " or video production quality."
+              ),
+              (
+                  "well_groomed vs casual: intentional polished presentation vs"
+                  " natural, minimal, or relaxed grooming."
+              ),
+              (
+                  "Always set 'value' to exactly one allowed label (lowercase)."
+              ),
+              (
+                  "Return detected=True if and only if a person is visible and"
+                  " grooming level is assessable."
+              ),
+              (
+                  "Return detected=False if no person is visible or grooming"
+                  " cannot be judged."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
+          id="socioeconomic_indicator",
+          name="Socioeconomic Indicator",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="SOCIOECONOMIC",
+          evaluation_criteria=f"""
+              Classify the dominant socioeconomic lifestyle tier suggested by
+              visible setting, products, decor, and consumption cues in the
+              content — not by inferring identity from people.
+              {SOCIOECONOMIC_INDICATOR_INSTRUCTION}
+          """,
+          prompt_template="""
+              What socioeconomic lifestyle tier do the setting and lifestyle
+              cues in this content suggest?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              SOCIOECONOMIC_INDICATOR_INSTRUCTION,
+              (
+                  "Use observable cues only: home/setting quality, product tier,"
+                  " brands shown, travel/leisure signals, and decor — not"
+                  " ethnicity, body type, or stereotypes about people."
+              ),
+              (
+                  "premium vs mid_tier: clearly upscale/luxury cues vs"
+                  " mainstream, everyday, middle-market presentation."
+              ),
+              (
+                  "mid_tier vs budget: ordinary mainstream setting vs explicit"
+                  " value/deal focus or economy-tier products and basic setting."
+              ),
+              (
+                  "Do not conflate with fashion_aesthetic elegant or production"
+                  " polish alone — focus on lifestyle/setting tier."
+              ),
+              (
+                  "Always set 'value' to exactly one allowed label (lowercase)."
+              ),
+              (
+                  "Return detected=True if and only if lifestyle tier cues are"
+                  " visible and one label clearly fits."
+              ),
+              (
+                  "Return detected=False if cues are insufficient, generic,"
+                  " or not assessable."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
+          id="skin_care_consciousness",
+          name="Skin Care Consciousness",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="SKIN_CARE_CONSCIOUSNESS",
+          evaluation_criteria=f"""
+              Classify how strongly the content reflects intentional skincare
+              awareness — routines, skin health, and product/regimen focus
+              (not general grooming polish alone; see grooming).
+              {SKIN_CARE_CONSCIOUSNESS_INSTRUCTION}
+          """,
+          prompt_template="""
+              How skin-care conscious is this content (routine depth, skin
+              health, and ingredient focus)?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              SKIN_CARE_CONSCIOUSNESS_INSTRUCTION,
+              (
+                  "Assess skincare as a practice or topic — not just whether"
+                  " skin looks good (grooming) or whether genre is beauty"
+                  " (genre_levels)."
+              ),
+              (
+                  "minimal vs basic_routine: no regimen cues vs simple cleanse/"
+                  " moisturize/SPF routine."
+              ),
+              (
+                  "moderate vs high_ingredient_focused: multi-step care or"
+                  " routine emphasis vs detailed actives/ingredient education."
+              ),
+              (
+                  "Always set 'value' to exactly one allowed label (lowercase)."
+              ),
+              (
+                  "Return detected=True if and only if beauty/personal-care"
+                  " context is present and skincare consciousness is assessable."
+              ),
+              (
+                  "Return detected=False if content is unrelated to beauty/skin"
+                  " care or skincare level cannot be judged."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
@@ -704,20 +1265,34 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
-          evaluation_criteria="""
-              The audio is clear and intelligible: speech (if present) can be heard,
-              volume is consistent, and noise/distortion does not hinder understanding.
+          evaluation_criteria=f"""
+              Classify overall audio quality: speech (if present) should be
+              intelligible, volume consistent, and noise/distortion should not
+              hinder understanding.
+              {AUDIO_QUALITY_INSTRUCTION}
           """,
           prompt_template="""
-              Is the audio quality clear enough that the content is easy to understand?
+              What is the overall audio quality tier of this content?
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              AUDIO_QUALITY_INSTRUCTION,
               (
-                  "If False, cite specific problems (e.g., clipping, muffled audio,"
-                  " loud background noise, inconsistent volume)."
+                  "In evidence, cite concrete audio cues (clarity, volume,"
+                  " background noise, distortion, muffling)."
               ),
-              "Return True if and only if audio quality is clear and intelligible.",
+              (
+                  "Always set 'value' to exactly one allowed label (lowercase):"
+                  " high, medium, or low."
+              ),
+              (
+                  "Return detected=True if and only if value is 'high' or"
+                  " 'medium' (acceptable audio or better)."
+              ),
+              (
+                  "Return detected=False if value is 'low', there is no"
+                  " assessable audio, or quality cannot be judged."
+              ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
@@ -731,21 +1306,34 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
-          evaluation_criteria="""
-              The visuals are clear enough to comfortably watch: the video is not
-              excessively blurry, pixelated, poorly framed, or distracting due to
-              severe shake.
+          evaluation_criteria=f"""
+              Classify overall visual quality: footage should be clear enough
+              to comfortably watch — not excessively blurry, pixelated, poorly
+              framed, or distracting due to severe shake.
+              {VIDEO_QUALITY_INSTRUCTION}
           """,
           prompt_template="""
-              Is the video quality visually clear and comfortable to watch?
+              What is the overall video quality tier of this content?
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              VIDEO_QUALITY_INSTRUCTION,
               (
-                  "If False, cite the dominant issue (blur, shake, bad framing,"
-                  " low resolution, compression artifacts)."
+                  "In evidence, cite the dominant visual cues (sharpness, shake,"
+                  " framing, resolution, compression artifacts)."
               ),
-              "Return True if and only if the visuals are clear and watchable.",
+              (
+                  "Always set 'value' to exactly one allowed label (lowercase):"
+                  " high, medium, or low."
+              ),
+              (
+                  "Return detected=True if and only if value is 'high' or"
+                  " 'medium' (watchable quality or better)."
+              ),
+              (
+                  "Return detected=False if value is 'low' or video quality"
+                  " cannot be assessed."
+              ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
@@ -759,21 +1347,31 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
-          evaluation_criteria="""
-              Lighting supports viewing: subject(s) are visible, exposure is not
-              consistently too dark/bright, and key details are not lost due to
-              harsh glare or severe backlighting.
+          evaluation_criteria=f"""
+              Rate lighting quality on a 0–5 scale. Lighting should support
+              viewing: subject(s) visible, exposure balanced, key details not
+              lost to glare or severe backlighting.
+              {LIGHTING_QUALITY_INSTRUCTION}
           """,
           prompt_template="""
-              Is the lighting generally good enough to clearly see the main subject(s)?
+              Rate the lighting quality in this content on a decimal scale of
+              0 to 5.
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              LIGHTING_QUALITY_INSTRUCTION,
               (
-                  "If False, describe the primary lighting issue (too dark, blown"
-                  " highlights, strong backlight, flicker, uneven lighting)."
+                  "In evidence, cite concrete lighting cues (exposure, shadows,"
+                  " backlight, flicker, natural vs artificial)."
               ),
-              "Return True if and only if lighting is generally sufficient and clear.",
+              (
+                  "Return detected=True if and only if the numeric score is"
+                  " 3.0 or higher (acceptable lighting or better)."
+              ),
+              (
+                  "Return detected=False if the score is below 3.0 or lighting"
+                  " cannot be assessed."
+              ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
           evaluation_function="",
@@ -787,23 +1385,41 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
-          evaluation_criteria="""
-              The video uses noticeable camera movement (e.g., handheld motion, pans,
-              tilts, zooms, tracking shots) that is intentional and does not harm
-              comprehension.
+          evaluation_criteria=f"""
+              Classify the camera movement or framing style(s) — how the camera
+              is held, positioned, and moved (or kept still) throughout the
+              content. Multiple styles may apply.
+              {CAMERA_MOVEMENT_GUIDANCE}
           """,
           prompt_template="""
-              Is there noticeable, intentional camera movement in this content?
+              What camera movement or framing style(s) appear in this content?
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              CAMERA_MOVEMENT_GUIDANCE,
               (
-                  "In evidence, describe the dominant movement style (handheld,"
-                  " stabilized pan/tilt, zoom, tracking)."
+                  "Selfie-mode = front-facing arm's-length creator shot;"
+                  " Handheld = noticeable hand-held motion; Static = fixed or"
+                  " tripod-locked frame; POV = first-person viewer perspective;"
+                  " Cinematic Movement = deliberate pans, tracking, dolly, or"
+                  " stabilized cinematic motion."
               ),
               (
-                  "Return True if and only if camera movement is clearly present"
-                  " and appears intentional."
+                  "Include multiple labels when clearly present (e.g."
+                  " 'Handheld, Selfie-mode'). Order by dominance; list at most"
+                  " 3 labels."
+              ),
+              (
+                  "In evidence, cite concrete cues (shake, pan, tracking, fixed"
+                  " frame, front-camera angle, POV framing)."
+              ),
+              (
+                  "Return detected=True if and only if at least one camera"
+                  " movement or framing style is clearly inferable."
+              ),
+              (
+                  "Return detected=False if movement/framing cannot be assessed"
+                  " (e.g. static image with no video motion cues)."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
@@ -818,28 +1434,123 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="STYLE_CLASSIFICATION",
-          evaluation_criteria="""
-              The content demonstrates a discernible editing style (e.g., jump cuts,
-              fast cuts, montage, minimal edits, heavy effects/filters, text-led
-              editing) that is consistent enough to describe.
+          evaluation_criteria=f"""
+              The content demonstrates discernible editing style(s) (cuts, pacing,
+              templates, transitions, B-roll, speed effects). Multiple styles
+              may apply.
+              {EDITING_STYLE_GUIDANCE}
           """,
           prompt_template="""
-              Does this content have a clear, describable editing style?
+              What editing style(s) are used in this content?
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              EDITING_STYLE_GUIDANCE,
               (
-                  "If detected=True, set the field 'value' to a short editing-style"
-                  " label (e.g., 'jump cuts', 'fast-cut montage', 'minimal edits',"
-                  " 'effects-heavy', 'text-led')."
+                  "Include multiple labels when clearly present (e.g."
+                  " 'Montage, Transition-Heavy'). Order by dominance; list at"
+                  " most 3 labels."
               ),
               (
-                  "If True, name the editing style in evidence and cite 1-2 concrete"
-                  " markers (e.g., frequent jump cuts, on-beat cuts, overlay-heavy)."
+                  "In evidence, cite 1–2 concrete markers (jump cuts, template"
+                  " overlays, beat-synced cuts, speed ramps, B-roll inserts)."
               ),
               (
-                  "Return True if and only if you can clearly describe the editing"
-                  " style using observable cues."
+                  "Return detected=True if and only if at least one editing"
+                  " style is clearly inferable from observable cues."
+              ),
+              (
+                  "Return detected=False if editing is not discernible or cannot"
+                  " be assessed (e.g. static image with no edit cues)."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
+          id="text_overlay",
+          name="Text Overlay",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="VISUAL_STYLE",
+          evaluation_criteria=f"""
+              Classify how much on-screen text overlay is used — burned-in
+              captions, titles, product labels, CTAs, stickers, and other
+              graphics added in edit (not platform caption metadata).
+              {TEXT_OVERLAY_INSTRUCTION}
+          """,
+          prompt_template="""
+              How heavy is the on-screen text overlay usage in this content?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              TEXT_OVERLAY_INSTRUCTION,
+              (
+                  "Assess on-screen text/graphics in the video or image — not"
+                  " the platform caption/description metadata."
+              ),
+              (
+                  "Always set 'value' to exactly one allowed label (lowercase):"
+                  " none, light, medium, or heavy."
+              ),
+              (
+                  "In evidence, cite concrete examples (what text appears, how"
+                  " often, placement, persistence)."
+              ),
+              (
+                  "Return detected=True if and only if value is 'light',"
+                  " 'medium', or 'heavy' (on-screen overlay is present)."
+              ),
+              (
+                  "Return detected=False if value is 'none' or overlay density"
+                  " cannot be assessed."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
+          id="face_visibility",
+          name="Face Visibility",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="VISUAL_STYLE",
+          evaluation_criteria=f"""
+              Score how visibly a human face appears across the full content
+              from 0 to 100 — presence, prominence, and framing (not eye contact
+              or gaze).
+              {FACE_VISIBILITY_INSTRUCTION}
+          """,
+          prompt_template="""
+              Score face visibility in this content from 0 to 100.
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              FACE_VISIBILITY_INSTRUCTION,
+              (
+                  "Assess face visibility across the full video or image — not"
+                  " only the first 5 seconds (c_visible_face)."
+              ),
+              (
+                  "Cartoon, animated, or illustrated human faces count as faces."
+              ),
+              (
+                  "In evidence, cite when the face appears, framing (wide vs"
+                  " close-up), and how you mapped prominence to the score."
+              ),
+              (
+                  "Return detected=True if and only if the numeric score is"
+                  " greater than 0 (a face is visible)."
+              ),
+              (
+                  "Return detected=False if the score is 0 or face visibility"
+                  " cannot be assessed."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
@@ -854,24 +1565,33 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="VISUAL_STYLE",
-          evaluation_criteria="""
-              The overall color grading / look of the content can be characterized
-              (e.g., warm, cool, neutral, high-contrast, muted/desaturated, vibrant,
-              cinematic, flat/natural, vintage/faded).
+          evaluation_criteria=f"""
+              Classify the overall color grading / visual look of the content.
+              Multiple looks may apply across scenes.
+              {COLOR_GRADE_GUIDANCE}
           """,
           prompt_template="""
-              Can you characterize the overall color grade or visual look of this content?
+              What color grade or visual look(s) characterize this content?
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              COLOR_GRADE_GUIDANCE,
               (
-                  "If detected=True, set the field 'value' to the primary color-grade"
-                  " label (e.g., 'warm', 'cool', 'high-contrast', 'muted', 'vibrant',"
-                  " 'cinematic', 'natural/flat')."
+                  "Include multiple labels when clearly present (e.g."
+                  " 'Warm, High-Contrast'). Order by dominance; list at most"
+                  " 3 labels."
               ),
               (
-                  "Return True if and only if the color grade is clearly inferable"
-                  " from the visuals."
+                  "In evidence, cite concrete visual cues (white balance, contrast,"
+                  " saturation, film-like tone, faded/vintage cast)."
+              ),
+              (
+                  "Return detected=True if and only if at least one color-grade"
+                  " or visual look is clearly inferable from the visuals."
+              ),
+              (
+                  "Return detected=False if the look cannot be assessed from"
+                  " the available media."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
@@ -910,32 +1630,85 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
+          id="narration_style",
+          name="Narration Style",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="STYLE_CLASSIFICATION",
+          evaluation_criteria=f"""
+              When narration or meaningful speech is present, classify the
+              narration style — point of view, narrative mode, and how the
+              speaker delivers the story or message.
+              Not the same as ad-like feel (genuine_vs_ad) or communication
+              format (communication_style).
+              {NARRATION_STYLE_GUIDANCE}
+          """,
+          prompt_template="""
+              What is the primary narration style of this content?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              NARRATION_STYLE_GUIDANCE,
+              (
+                  "First Person Storytelling = speaker tells their own story"
+                  " using I/me; Direct Address = speaks straight to viewer;"
+                  " Voice-over Exposition = detached narrator over visuals."
+              ),
+              (
+                  "Assess narration mode only — not whether delivery feels"
+                  " scripted vs organic (use evidence for nuance) or whether"
+                  " content is an ad (genuine_vs_ad)."
+              ),
+              (
+                  "In evidence, cite POV, narrative structure, and delivery"
+                  " cues (I/my story, you/the viewer, step-by-step teaching)."
+              ),
+              (
+                  "Return detected=True if and only if narration or meaningful"
+                  " speech is present and a narration style can be described."
+              ),
+              (
+                  "Return detected=False if there is no speech/narration or"
+                  " style cannot be judged."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
           id="audio_type",
           name="Audio Type",
           category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="STYLE_CLASSIFICATION",
-          evaluation_criteria="""
-              The primary audio format can be identified as one of: voice-over,
-              dialogue/on-camera speech, music-first/trending sound, or mixed.
+          evaluation_criteria=f"""
+              Classify the primary audio format — what drives the sound track.
+              {AUDIO_TYPE_INSTRUCTION}
           """,
           prompt_template="""
-              Can you identify the primary audio type (voice-over, dialogue, music/trending sound, or mixed)?
+              What is the primary audio type of this content?
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              AUDIO_TYPE_INSTRUCTION,
               (
-                  "If detected=True, set the field 'value' to one of:"
-                  " 'voice-over', 'dialogue', 'music-first/trending sound', or 'mixed'."
+                  "Always set 'value' to exactly one allowed label (lowercase)."
               ),
               (
-                  "If True, state the primary audio type in evidence and note any"
-                  " significant secondary type."
+                  "In evidence, note the dominant audio cues (music, narration,"
+                  " on-camera speech, trending sound)."
               ),
               (
-                  "Return True if and only if one primary audio type is clearly"
-                  " dominant."
+                  "Return detected=True if and only if a primary audio type is"
+                  " clearly inferable."
+              ),
+              (
+                  "Return detected=False if audio type cannot be assessed"
+                  " (e.g. silent content with no audio cues)."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
@@ -950,22 +1723,32 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
-          evaluation_criteria="""
-              When both music and speech are present, the mix supports understanding:
-              dialogue is not consistently overpowered by music and remains intelligible.
+          evaluation_criteria=f"""
+              When music and speech are both present, classify their relative
+              balance in the mix. When only speech is present with little or no
+              music, use dialogue_dominant.
+              {MUSIC_DIALOGUE_BALANCE_INSTRUCTION}
           """,
           prompt_template="""
-              When music and speech are both present, is the dialogue still clearly intelligible (not overpowered)?
+              How would you classify the music–dialogue balance in this content?
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              MUSIC_DIALOGUE_BALANCE_INSTRUCTION,
               (
-                  "If False, describe whether music is overpowering, the mix is"
-                  " inconsistent, or speech is drowned out."
+                  "Always set 'value' to exactly one allowed label (lowercase)."
               ),
               (
-                  "Return True if and only if speech remains consistently intelligible"
-                  " when music is present."
+                  "In evidence, describe relative volume, masking, and whether"
+                  " speech stays intelligible under the music."
+              ),
+              (
+                  "Return detected=True if and only if speech is present and"
+                  " balance can be classified."
+              ),
+              (
+                  "Return detected=False if there is no speech or balance cannot"
+                  " be assessed."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
@@ -974,29 +1757,81 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
-          id="speech_pace_clarity",
-          name="Speech Pace & Clarity",
+          id="speech_pace",
+          name="Speech Pace",
           category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="TECHNICAL_QUALITY",
-          evaluation_criteria="""
-              Speech (if present) is delivered at a pace and with clarity that is
-              easy to follow, without being consistently too fast, mumbled, or
-              unclear for typical viewers.
+          evaluation_criteria=f"""
+              Classify how fast speech is delivered when speech is present.
+              {SPEECH_PACE_INSTRUCTION}
           """,
           prompt_template="""
-              If speech is present, is it delivered at a clear pace that is easy to follow?
+              What is the speech pace in this content?
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              SPEECH_PACE_INSTRUCTION,
               (
-                  "If False, specify the issue: too fast, unclear articulation,"
-                  " heavy overlap, or unclear diction."
+                  "Always set 'value' to exactly one allowed label (lowercase):"
+                  " fast, moderate, or slow."
               ),
               (
-                  "Return True if and only if speech delivery is generally clear and"
-                  " easy to follow."
+                  "In evidence, cite delivery speed cues (words per moment,"
+                  " rushed vs deliberate pacing)."
+              ),
+              (
+                  "Return detected=True if and only if speech is present and"
+                  " pace can be assessed."
+              ),
+              (
+                  "Return detected=False if there is no speech or pace cannot"
+                  " be judged."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
+          id="speech_clarity",
+          name="Speech Clarity",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="TECHNICAL_QUALITY",
+          evaluation_criteria=f"""
+              Classify how clear and intelligible speech is when speech is
+              present (articulation and understandability, not pace).
+              {SPEECH_CLARITY_INSTRUCTION}
+          """,
+          prompt_template="""
+              How clear is the speech in this content?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              SPEECH_CLARITY_INSTRUCTION,
+              (
+                  "Assess clarity and diction only — not pace (speech_pace) or"
+                  " music mix (music_dialogue_balance)."
+              ),
+              (
+                  "Always set 'value' to exactly one allowed label (lowercase):"
+                  " clear, accented_but_clear, or unclear."
+              ),
+              (
+                  "In evidence, cite articulation, accent, mumbling, or overlap"
+                  " issues."
+              ),
+              (
+                  "Return detected=True if and only if value is 'clear' or"
+                  " 'accented_but_clear'."
+              ),
+              (
+                  "Return detected=False if value is 'unclear', there is no"
+                  " speech, or clarity cannot be assessed."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
@@ -1039,67 +1874,45 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           group_by=VideoSegment.FULL_VIDEO,
       ),
       VideoFeature(
-          id="narration_style_scripted_vs_organic",
-          name="Narration Style (Scripted vs Organic)",
-          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
-          sub_category=VideoFeatureSubCategory.NONE,
-          video_segment=VideoSegment.FULL_VIDEO,
-          feature_group="STYLE_CLASSIFICATION",
-          evaluation_criteria="""
-              If narration/speech is present, the delivery style can be characterized
-              as mostly scripted (polished, rehearsed, structured) or organic
-              (conversational, spontaneous, imperfect).
-          """,
-          prompt_template="""
-              If narration/speech is present, can its style be characterized as mostly scripted or mostly organic?
-          """,
-          extra_instructions=[
-              "Consider the following criteria for your answer: {criteria}.",
-              (
-                  "If detected=True, set the field 'value' to either 'scripted' or"
-                  " 'organic'."
-              ),
-              (
-                  "If True, state the dominant style (scripted vs organic) in evidence"
-                  " and mention 1-2 markers that led you there."
-              ),
-              (
-                  "Return True if and only if one dominant narration style is clearly"
-                  " inferable."
-              ),
-          ],
-          evaluation_method=EvaluationMethod.LLMS,
-          evaluation_function="",
-          include_in_evaluation=False,
-          group_by=VideoSegment.FULL_VIDEO,
-      ),
-      VideoFeature(
           id="language_accent_detection",
-          name="Language / Accent Detection",
+          name="Language / Accent",
           category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="LANGUAGE",
-          evaluation_criteria="""
-              The spoken language and notable accent/variety (if any) can be identified
-              (e.g., English with regional accent, Spanish, Hindi, etc.). If there is
-              no speech, return False.
+          evaluation_criteria=f"""
+              Identify the primary spoken language, language mix, or notable
+              accent/variety when speech is present.
+              {LANGUAGE_ACCENT_GUIDANCE}
           """,
           prompt_template="""
-              Is there speech, and if so, can you identify the language and any notable accent/variety?
+              What is the primary spoken language, mix, or accent in this
+              content?
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              LANGUAGE_ACCENT_GUIDANCE,
               (
-                  "If True, state the language and any notable accent/variety in evidence."
+                  "Use 'Hinglish' when Hindi and English are blended in speech;"
+                  " use 'Multilingual' when multiple languages are used"
+                  " substantially without one clear primary language."
               ),
               (
-                  "If detected=True, set the field 'value' to the best label you can,"
-                  " e.g. 'Hindi', 'English (Indian)', 'Spanish (LatAm)'."
+                  "For a single dominant language with regional accent, use"
+                  " labels like 'English (Indian)' or 'Hindi' instead."
               ),
               (
-                  "Return True if and only if speech is present AND language is"
-                  " identifiable with reasonable confidence."
+                  "In evidence, cite spoken phrases or segments that support"
+                  " the language/accent label."
+              ),
+              (
+                  "Return detected=True if and only if speech is present and"
+                  " primary language can be identified with reasonable"
+                  " confidence."
+              ),
+              (
+                  "Return detected=False if there is no speech or language"
+                  " cannot be identified."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
@@ -1114,23 +1927,34 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
           sub_category=VideoFeatureSubCategory.NONE,
           video_segment=VideoSegment.FULL_VIDEO,
           feature_group="LANGUAGE",
-          evaluation_criteria="""
-              A secondary spoken language (different from the primary language) is
-              clearly used in the content. If only one language is present, return False.
+          evaluation_criteria=f"""
+              Detect whether a distinct secondary spoken language is used in
+              addition to the primary language. Occasional loanwords or brand
+              names do not count.
+              {SECONDARY_LANGUAGE_GUIDANCE}
           """,
           prompt_template="""
-              Is a secondary spoken language clearly used in this content in addition
-              to the primary language?
+              Is a secondary spoken language clearly used in this content in
+              addition to the primary language?
           """,
           extra_instructions=[
               "Consider the following criteria for your answer: {criteria}.",
+              SECONDARY_LANGUAGE_GUIDANCE,
               (
-                  "If detected=True, set the field 'value' to the secondary language"
-                  " label (e.g., 'English', 'Hindi', 'Spanish')."
+                  "Compare against the primary language identified in"
+                  " language_accent_detection when possible."
               ),
               (
-                  "Return True if and only if a distinct secondary language is"
-                  " clearly spoken, not just occasional loanwords."
+                  "In evidence, cite segments where the secondary language is"
+                  " spoken (not just on-screen text)."
+              ),
+              (
+                  "Return detected=True if and only if a distinct secondary"
+                  " language is clearly spoken."
+              ),
+              (
+                  "Return detected=False if only one language is used or a"
+                  " secondary language cannot be confirmed."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
@@ -1163,6 +1987,50 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
               (
                   "Return True if and only if at least one content bucket clearly"
                   " applies based on what the video/image is doing."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
+          id="brand_visibility_in_content",
+          name="Brand Visibility In Content",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="BRAND_INTEGRATION",
+          evaluation_criteria=f"""
+              Classify how visibly the brand or featured product appears in the
+              content overall (visual and verbal cues combined). Use the brand
+              name {{brand_name}} when known; otherwise assess the featured
+              brand/product. {BRAND_VISIBILITY_IN_CONTENT_INSTRUCTION}
+          """,
+          prompt_template="""
+              How visible is the brand {brand_name} or featured product in this
+              content overall?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              BRAND_VISIBILITY_IN_CONTENT_INSTRUCTION,
+              (
+                  "Weigh logo/packaging on screen, product prominence, overlays,"
+                  " and spoken brand mentions together for one overall level."
+              ),
+              (
+                  "Always set 'value' to exactly one of:"
+                  f" {', '.join(BRAND_VISIBILITY_IN_CONTENT_LEVELS)}."
+              ),
+              (
+                  "Return detected=True if and only if value is Incidental,"
+                  " Prominent, or Featured."
+              ),
+              (
+                  "Return detected=False if and only if value is None."
+              ),
+              (
+                  "Summarize visual and verbal evidence in evidence and rationale."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
@@ -1334,6 +2202,115 @@ def get_content_intelligence_feature_configs() -> list[VideoFeature]:
               ),
               (
                   "Return True if and only if one archetype is clearly the best fit."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
+          id="communication_style",
+          name="Communication Style",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="COMMUNICATION",
+          evaluation_criteria=f"""
+              Classify the primary way the content communicates its message
+              through speech, on-screen text, and presenter delivery.
+              {COMMUNICATION_STYLE_INSTRUCTION}
+          """,
+          prompt_template="""
+              What is the primary communication style of this content?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              COMMUNICATION_STYLE_INSTRUCTION,
+              (
+                  "Pick the single best-fit label based on how the message is"
+                  " delivered, not creator role (creator_archetype) or emotional"
+                  " mood alone (emotional_tone)."
+              ),
+              (
+                  "educational vs demonstrative: explaining/teaching vs showing"
+                  " hands-on use step by step."
+              ),
+              (
+                  "storytelling vs conversational: narrative arc vs casual chat"
+                  " without a clear story structure."
+              ),
+              (
+                  "humorous vs promotional: comedy drives delivery vs selling or"
+                  " CTA-forward pitch."
+              ),
+              (
+                  "direct vs conversational: blunt, no-nonsense clarity vs relaxed"
+                  " peer-to-peer tone."
+              ),
+              (
+                  "Always set 'value' to exactly one allowed label (lowercase)."
+              ),
+              (
+                  "Return detected=True if and only if a primary communication"
+                  " style is clearly inferable from speech, text, or deliberate"
+                  " presenter delivery."
+              ),
+              (
+                  "Return detected=False if there is no meaningful communication"
+                  " (e.g. music-only montage with no message channel)."
+              ),
+          ],
+          evaluation_method=EvaluationMethod.LLMS,
+          evaluation_function="",
+          include_in_evaluation=True,
+          group_by=VideoSegment.FULL_VIDEO,
+      ),
+      VideoFeature(
+          id="cta_type",
+          name="Call-to-Action Type",
+          category=VideoFeatureCategory.CONTENT_INTELLIGENCE,
+          sub_category=VideoFeatureSubCategory.NONE,
+          video_segment=VideoSegment.FULL_VIDEO,
+          feature_group="CTA",
+          evaluation_criteria=f"""
+              Classify the primary call-to-action (CTA) that asks the viewer to
+              take a specific action, in spoken words or on-screen text.
+              {CTA_TYPE_INSTRUCTION}
+          """,
+          prompt_template="""
+              What is the primary call-to-action type in this content (speech
+              or on-screen text)?
+          """,
+          extra_instructions=[
+              "Consider the following criteria for your answer: {criteria}.",
+              CTA_TYPE_INSTRUCTION,
+              (
+                  "Consider both spoken CTAs and on-screen text CTAs. Examples"
+                  " of common CTA phrases include: {call_to_actions}."
+              ),
+              (
+                  "If multiple CTAs appear, pick the dominant primary ask"
+                  " (usually the closing or strongest conversion ask)."
+              ),
+              (
+                  "purchase_prompt vs learn_more: explicit buy/shop/order/code"
+                  " vs softer check-it-out or learn-more without purchase."
+              ),
+              (
+                  "comment_prompt vs dm_prompt: public comment keyword vs private"
+                  " message/DM request."
+              ),
+              (
+                  "Always set 'value' to exactly one allowed label (lowercase)."
+              ),
+              (
+                  "Return detected=True if and only if a clear primary CTA is"
+                  " present in speech or on-screen text."
+              ),
+              (
+                  "Return detected=False if there is no explicit viewer action"
+                  " requested."
               ),
           ],
           evaluation_method=EvaluationMethod.LLMS,
