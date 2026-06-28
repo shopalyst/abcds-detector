@@ -20,6 +20,8 @@
 
 """Module to load helper functions and classes to interact with Vertex AI"""
 
+import logging
+import sys
 import time
 import json
 import vertexai
@@ -34,6 +36,11 @@ from models import LLMParameters
 
 
 DEFAULT_CONFIG = LLMParameters()
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stdout,
+    force=True
+)
 
 
 class GeminiAPIService:
@@ -89,14 +96,14 @@ class GeminiAPIService:
             response_mime_type="application/json",
             response_schema=llm_params.generation_config.get("response_schema"),
         )
-        print("Gemini call: ", contents, generate_content_config)
+        logging.info("Gemini call: ", contents, generate_content_config)
         # Get response from Gemini
         response = client.models.generate_content(
             model=llm_params.model_name,
             contents=contents,
             config=generate_content_config,
         )
-        print("Gemini api response: ", response.parsed)
+        logging.info("Gemini api response: ", response.parsed)
         return response.parsed
       except ResourceExhausted as ex:
         print(f"QUOTA RETRY: {this_retry + 1}. ERROR {str(ex)} ...")
